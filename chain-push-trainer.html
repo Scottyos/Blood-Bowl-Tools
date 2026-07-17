@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chain Push Trainer — Blood Bowl</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --turf-a:#2e5330;
+    --turf-b:#356239;
+    --turf-line:rgba(238,231,200,0.16);
+    --crowd:#1c1310;
+    --crowd-b:#2a1c17;
+    --gold:#d3af37;
+    --gold-dim:#8f7a33;
+    --blood:#9c2f3a;
+    --blood-dim:#5c2029;
+    --own:#3d6ea1;
+    --own-dim:#274a6e;
+    --bone:#ece2c6;
+    --bone-dim:#c9bd9e;
+    --ink:#181410;
+    --panel:#241d16;
+    --panel-2:#2c2319;
+    font-size:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at 20% -10%, #3a2c1c 0%, transparent 55%),
+      radial-gradient(ellipse at 90% 110%, #2a2013 0%, transparent 55%),
+      var(--ink);
+    color:var(--bone);
+    font-family:'Inter',system-ui,sans-serif;
+    min-height:100vh;
+    padding:clamp(12px,3vw,32px);
+  }
+  .wrap{max-width:1180px;margin:0 auto;}
+
+  header{margin-bottom:22px;}
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--gold);opacity:.85;margin-bottom:6px;
+  }
+  h1{
+    font-family:'Anton',sans-serif;
+    font-weight:400;
+    font-size:clamp(30px,5vw,46px);
+    letter-spacing:.01em;
+    margin:0 0 6px 0;
+    color:var(--bone);
+    text-shadow:0 2px 0 rgba(0,0,0,.4);
+  }
+  header p{margin:0;color:var(--bone-dim);font-size:14.5px;max-width:640px;line-height:1.5;}
+
+  .layout{
+    display:grid;
+    grid-template-columns:220px 1fr;
+    gap:18px;
+  }
+  @media (max-width:860px){
+    .layout{grid-template-columns:1fr;}
+  }
+
+  /* ---- sidebar ---- */
+  .sidebar{
+    background:var(--panel);
+    border:1px solid #3a2f22;
+    border-radius:10px;
+    padding:12px;
+    align-self:start;
+  }
+  .sidebar h2{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--gold-dim);margin:4px 6px 10px;
+  }
+  .puzzle-btn{
+    display:flex;align-items:center;gap:10px;
+    width:100%;text-align:left;
+    background:transparent;border:1px solid transparent;
+    color:var(--bone-dim);
+    padding:9px 10px;border-radius:7px;
+    font-family:'Inter',sans-serif;font-size:13.5px;font-weight:500;
+    cursor:pointer;margin-bottom:3px;
+    transition:background .15s,color .15s,border-color .15s;
+  }
+  .puzzle-btn:hover{background:#2f271b;color:var(--bone);}
+  .puzzle-btn.active{background:#3a2f1c;border-color:var(--gold-dim);color:var(--bone);}
+  .puzzle-btn .num{
+    font-family:'JetBrains Mono',monospace;font-size:11px;
+    width:20px;height:20px;border-radius:4px;
+    background:#3a3024;color:var(--bone-dim);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .puzzle-btn.solved .num{background:var(--gold);color:#241d16;}
+  .puzzle-btn .fz{
+    margin-left:auto;font-size:10px;font-family:'JetBrains Mono',monospace;
+    color:var(--blood);opacity:.85;letter-spacing:.05em;
+  }
+  .divider-label{
+    font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;
+    color:var(--gold-dim);text-transform:uppercase;
+    margin:14px 6px 8px;padding-top:10px;border-top:1px dashed #3a2f22;
+  }
+
+  /* ---- main ---- */
+  .main{display:flex;flex-direction:column;gap:14px;}
+
+  .card{
+    background:var(--panel);
+    border:1px solid #3a2f22;
+    border-radius:10px;
+    padding:16px 18px;
+  }
+
+  .puzzle-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap;}
+  .puzzle-title{font-family:'Anton',sans-serif;font-weight:400;font-size:22px;color:var(--bone);letter-spacing:.01em;}
+  .puzzle-blurb{color:var(--bone-dim);font-size:13.5px;line-height:1.55;margin-top:6px;max-width:560px;}
+  .badge{
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;
+    padding:4px 9px;border-radius:100px;text-transform:uppercase;white-space:nowrap;
+  }
+  .badge.frenzy{background:var(--blood-dim);color:#f3c9cd;border:1px solid var(--blood);}
+
+  .board-area{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:16px;
+    align-items:start;
+  }
+  @media (min-width:760px){
+    .board-area{grid-template-columns:auto 1fr;}
+  }
+
+  .board-frame{
+    background:var(--crowd);
+    border-radius:8px;
+    padding:10px;
+    border:1px solid #000;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.03), 0 8px 24px rgba(0,0,0,.35);
+    width:fit-content;
+  }
+  .board{
+    display:grid;
+    grid-template-columns:repeat(9, clamp(30px,7.2vw,46px));
+    grid-template-rows:repeat(9, clamp(30px,7.2vw,46px));
+    gap:2px;
+  }
+  .cell{
+    position:relative;
+    display:flex;align-items:center;justify-content:center;
+    border-radius:3px;
+  }
+  .cell.pitch{background:var(--turf-a);}
+  .cell.pitch.alt{background:var(--turf-b);}
+  .cell.pitch::after{
+    content:'';position:absolute;inset:0;
+    background-image:
+      linear-gradient(to right, var(--turf-line) 1px, transparent 1px);
+    background-size:100% 100%;
+  }
+  .cell.crowd{
+    background:
+      repeating-linear-gradient(45deg, var(--crowd-b) 0 4px, var(--crowd) 4px 8px);
+  }
+  .cell.candidate{
+    cursor:pointer;
+  }
+  .cell.candidate::before{
+    content:'';
+    position:absolute;inset:3px;
+    border:2px dashed var(--gold);
+    border-radius:4px;
+    animation:pulse 1.1s ease-in-out infinite;
+  }
+  .cell.candidate:hover::before{
+    border-style:solid;
+    background:rgba(211,175,55,.18);
+  }
+  @keyframes pulse{
+    0%,100%{opacity:.55;transform:scale(1);}
+    50%{opacity:1;transform:scale(1.05);}
+  }
+
+  .token{
+    width:78%;height:78%;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Anton',sans-serif;font-size:clamp(11px,2.6vw,16px);
+    color:#fff;
+    border:2px solid rgba(0,0,0,.4);
+    box-shadow:0 2px 4px rgba(0,0,0,.5), inset 0 1px 1px rgba(255,255,255,.25);
+    position:relative;
+    transition:transform .18s ease;
+    z-index:2;
+  }
+  .token.attacker{background:linear-gradient(160deg,#e9cf6e,var(--gold));color:#241d16;}
+  .token.opp{background:linear-gradient(160deg,#c65461,var(--blood));}
+  .token.own{background:linear-gradient(160deg,#5f96c9,var(--own));}
+  .token.target{box-shadow:0 0 0 3px var(--gold), 0 2px 6px rgba(0,0,0,.5);}
+  .token.target::after{
+    content:'★';
+    position:absolute;top:-9px;right:-7px;
+    font-size:12px;color:var(--gold);
+    text-shadow:0 1px 1px #000;
+  }
+  .token.surfed{
+    filter:grayscale(.7) brightness(.65);
+    opacity:.85;
+  }
+  .token.surfed::before{
+    content:'☠';
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;color:#fff;
+    text-shadow:0 1px 2px #000;
+  }
+
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+  button.action{
+    font-family:'Inter',sans-serif;font-weight:600;font-size:13px;
+    padding:9px 16px;border-radius:7px;border:1px solid transparent;
+    cursor:pointer;transition:filter .15s, transform .1s;
+  }
+  button.action:active{transform:translateY(1px);}
+  button.primary{background:var(--gold);color:#241d16;}
+  button.primary:hover{filter:brightness(1.08);}
+  button.secondary{background:transparent;border-color:#4a3d2a;color:var(--bone-dim);}
+  button.secondary:hover{color:var(--bone);border-color:var(--gold-dim);}
+  button.action:disabled{opacity:.35;cursor:not-allowed;}
+
+  .side-panel{display:flex;flex-direction:column;gap:12px;min-width:0;}
+
+  .legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--bone-dim);}
+  .legend span{display:flex;align-items:center;gap:6px;}
+  .dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+  .dot.attacker{background:var(--gold);}
+  .dot.opp{background:var(--blood);}
+  .dot.own{background:var(--own);}
+
+  .log{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--bone-dim);
+    background:var(--panel-2);
+    border:1px solid #3a2f22;
+    border-radius:7px;
+    padding:10px 12px;
+    min-height:64px;
+    max-height:150px;
+    overflow-y:auto;
+    line-height:1.6;
+  }
+  .log .line{opacity:0;animation:fadein .3s forwards;}
+  @keyframes fadein{to{opacity:1;}}
+  .log .line.surf{color:var(--blood);}
+  .log .line.chain{color:var(--gold);}
+  .log .line.frenzy{color:#f3c9cd;}
+
+  .result{
+    border-radius:7px;padding:12px 14px;font-size:14px;font-weight:600;
+    display:none;align-items:center;gap:10px;
+  }
+  .result.show{display:flex;}
+  .result.success{background:#1e3a24;color:#a6e3b0;border:1px solid #2f5f3a;}
+  .result.fail{background:#3a1f1f;color:#f0b3b3;border:1px solid #5f2f2f;}
+
+  details.rules{
+    background:var(--panel);border:1px solid #3a2f22;border-radius:10px;
+    padding:2px 18px;
+  }
+  details.rules summary{
+    cursor:pointer;padding:12px 0;font-weight:600;font-size:13.5px;color:var(--gold);
+    font-family:'Inter',sans-serif;list-style:none;
+  }
+  details.rules summary::-webkit-details-marker{display:none;}
+  details.rules summary::before{content:'▸ ';color:var(--gold-dim);}
+  details.rules[open] summary::before{content:'▾ ';}
+  .rules-body{padding-bottom:16px;color:var(--bone-dim);font-size:13px;line-height:1.6;}
+  .rules-body h3{color:var(--bone);font-size:13px;margin:12px 0 4px;font-family:'Inter',sans-serif;}
+  .rules-body ol{padding-left:20px;margin:6px 0;}
+
+  footer{margin-top:20px;text-align:center;font-size:11.5px;color:#5c4f3c;font-family:'JetBrains Mono',monospace;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Blood Bowl / Assist Tool</div>
+    <h1>Chain Push Trainer</h1>
+    <p>Every block below is assumed to land on a Push result — the dice aren't the point here. The point is reading the three squares your push can land in, chaining that into whoever's standing behind, and knowing when Frenzy buys you a second block to finish the surf.</p>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar">
+      <h2>Chain Push Basics</h2>
+      <div id="puzzleListBasic"></div>
+      <div class="divider-label">Frenzy Follow-Ups</div>
+      <div id="puzzleListFrenzy"></div>
+    </nav>
+
+    <div class="main">
+
+      <div class="card">
+        <div class="puzzle-head">
+          <div>
+            <div class="puzzle-title" id="puzzleTitle"></div>
+            <div class="puzzle-blurb" id="puzzleBlurb"></div>
+          </div>
+          <div id="frenzyBadgeWrap"></div>
+        </div>
+
+        <div class="board-area">
+          <div class="board-frame">
+            <div class="board" id="board"></div>
+          </div>
+
+          <div class="side-panel">
+            <div class="legend">
+              <span><span class="dot attacker"></span>Attacker (your block)</span>
+              <span><span class="dot opp"></span>Opponent</span>
+              <span><span class="dot own"></span>Your teammate</span>
+              <span>★ = surf target</span>
+            </div>
+
+            <div class="controls">
+              <button class="action primary" id="btnBlock">Throw the Block</button>
+              <button class="action secondary" id="btnHint">Hint</button>
+              <button class="action secondary" id="btnReset">Reset Puzzle</button>
+            </div>
+
+            <div class="result" id="result"></div>
+
+            <div class="log" id="log"></div>
+          </div>
+        </div>
+      </div>
+
+      <details class="rules">
+        <summary>How chain pushes actually work (quick reference)</summary>
+        <div class="rules-body">
+          <h3>Picking a push square</h3>
+          <p>When your block resolves as a Push, you don't get to send the defender anywhere you like. Draw a line from your attacker through the defender — the defender can only go into one of the <strong>three squares directly on the far side</strong> of that line (the square dead ahead, plus the two beside it). That's why this trainer highlights exactly three candidate squares per push.</p>
+          <h3>Chain pushing</h3>
+          <ol>
+            <li>If your chosen square is empty, the defender lands there and the chain stops.</li>
+            <li>If your chosen square is <strong>occupied</strong> — by anyone, either team — that player gets shoved too, using the same three-square logic, now measured from the square your first mover just came from.</li>
+            <li>If a push square is <strong>off the pitch</strong>, that player is surfed into the crowd — an automatic injury, no armour roll needed.</li>
+          </ol>
+          <h3>Frenzy</h3>
+          <p>An attacker with Frenzy <strong>must</strong> follow up into the square the defender just vacated after any push. If the defender is still standing and still adjacent, the attacker <strong>must</strong> block them again — a second Push, resolved the same way. That second block is often the difference between "shoved once" and "gone."</p>
+        </div>
+      </details>
+
+    </div>
+  </div>
+
+  <footer>ASSUMES EVERY BLOCK RESULT IS A PUSH · GEOMETRY-ONLY TRAINER</footer>
+</div>
+
+<script>
+/* ---------------- push geometry ---------------- */
+const RING = [
+  {dr:-1,dc:0},{dr:-1,dc:1},{dr:0,dc:1},{dr:1,dc:1},
+  {dr:1,dc:0},{dr:1,dc:-1},{dr:0,dc:-1},{dr:-1,dc:-1}
+];
+function dirIndex(dr,dc){ return RING.findIndex(v=>v.dr===dr && v.dc===dc); }
+function getPushCandidates(attackerPos, defenderPos){
+  const dr = Math.sign(attackerPos.r - defenderPos.r);
+  const dc = Math.sign(attackerPos.c - defenderPos.c);
+  const idx = dirIndex(dr,dc); // direction FROM defender TO attacker
+  const opp = (idx+4)%8;
+  const idxs = [(opp+7)%8, opp, (opp+1)%8];
+  return idxs.map(i=>({r:defenderPos.r+RING[i].dr, c:defenderPos.c+RING[i].dc}));
+}
+const R_MIN=0, R_MAX=6, C_MIN=0, C_MAX=6;
+function offBoard(sq){ return sq.r<R_MIN||sq.r>R_MAX||sq.c<C_MIN||sq.c>C_MAX; }
+
+/* ---------------- puzzle data ---------------- */
+// coordinates are r,c in 0..6 (7x7 pitch), attacker always adjacent to 'defender'
+const PUZZLES = [
+  {
+    id:'p1', group:'basic', title:'Pinned On The Line',
+    blurb:"Your target is already sitting on the edge column. Throw the block — see where a push can send him from here.",
+    frenzy:false,
+    attacker:{r:3,c:5},
+    defender:{r:3,c:6,team:'opp',isTarget:true,label:'D'},
+    obstacles:[],
+    hint:"All three push squares are already off the pitch — from this position there's no wrong answer.",
+    check:(p)=> p.defender.status==='surfed'
+  },
+  {
+    id:'p2', group:'basic', title:'Pick The Angle',
+    blurb:"Your attacker is lined up diagonally. Two of the three push squares dump him in the crowd — one just shuffles him along the sideline. Choose carefully.",
+    frenzy:false,
+    attacker:{r:2,c:5},
+    defender:{r:3,c:6,team:'opp',isTarget:true,label:'D'},
+    obstacles:[],
+    hint:"East and South-East both go off the pitch. South keeps him in play — avoid it.",
+    check:(p)=> p.defender.status==='surfed'
+  },
+  {
+    id:'p3', group:'basic', title:'Clear The Screen',
+    blurb:"Your real target is the player on the sideline, but there's a screen standing between you. Push your immediate opponent straight into him to start a chain reaction.",
+    frenzy:false,
+    attacker:{r:3,c:4},
+    defender:{r:3,c:5,team:'opp',isTarget:false,label:'S'},
+    obstacles:[{id:'screenTarget',r:3,c:6,team:'opp',isTarget:true,label:'T'}],
+    hint:"Push the screen (S) due East, straight into the target (T) on the edge column — that chains him off.",
+    check:(p)=> p.screenTarget.status==='surfed'
+  },
+  {
+    id:'p4', group:'basic', title:"Don't Surf Your Own Guy",
+    blurb:"You want this ball-carrier pushed off the sideline lane — but one of the three push squares would shove him straight into your own teammate. Reposition him safely instead.",
+    frenzy:false,
+    attacker:{r:2,c:2},
+    defender:{r:3,c:3,team:'opp',isTarget:true,label:'D'},
+    obstacles:[{id:'mate',r:4,c:4,team:'own',isTarget:false,label:'M'}],
+    hint:"South-East lands right on top of your own teammate (M) — pick East or South instead.",
+    check:(p)=> p.defender.status==='onpitch' && p.mate.status==='onpitch' && p.mate.r===4 && p.mate.c===4
+  },
+  {
+    id:'p5', group:'frenzy', title:'Frenzy Follow-Through',
+    blurb:"Your attacker has Frenzy. One push alone won't reach the crowd from here — but Frenzy forces a mandatory follow-up and a second block. Land both pushes to finish the surf.",
+    frenzy:true,
+    attacker:{r:3,c:4},
+    defender:{r:3,c:5,team:'opp',isTarget:true,label:'D'},
+    obstacles:[],
+    hint:"Push straight East first — that lines the second push up so all three follow-up options reach the crowd. Pushed at an angle instead? One of the three second-push squares will stay on the pitch, so read it carefully before you click.",
+    check:(p)=> p.defender.status==='surfed'
+  },
+  {
+    id:'p6', group:'frenzy', title:'Frenzy Chain Combo',
+    blurb:"Your attacker has Frenzy, and there's a screening opponent camped on the far sideline. The first push alone won't get anyone off — but the mandatory Frenzy block can chain straight through the screen and into the crowd.",
+    frenzy:true,
+    attacker:{r:3,c:3},
+    defender:{r:3,c:4,team:'opp',isTarget:false,label:'D'},
+    obstacles:[{id:'screen',r:3,c:6,team:'opp',isTarget:true,label:'S'}],
+    hint:"First push East. On the mandatory Frenzy block, push East again to crash into the screen (S) on the edge — that chain goes straight into the crowd.",
+    check:(p)=> p.screen.status==='surfed'
+  },
+];
+
+/* ---------------- engine state ---------------- */
+let current = null;      // puzzle def
+let players = {};        // id -> {id,r,c,team,label,isTarget,status}
+let queue = [];
+let pendingCandidates = null;
+let pendingItem = null;
+let frenzyUsed = false;
+let resolving = false;
+let solved = new Set();
+
+function buildPlayers(puzzle){
+  const p = {};
+  p.attacker = {id:'attacker', r:puzzle.attacker.r, c:puzzle.attacker.c, team:'attacker', label:'A', isTarget:false, status:'onpitch'};
+  p.defender = {id:'defender', r:puzzle.defender.r, c:puzzle.defender.c, team:puzzle.defender.team, label:puzzle.defender.label, isTarget:!!puzzle.defender.isTarget, status:'onpitch'};
+  (puzzle.obstacles||[]).forEach(o=>{
+    p[o.id] = {id:o.id, r:o.r, c:o.c, team:o.team, label:o.label, isTarget:!!o.isTarget, status:'onpitch'};
+  });
+  return p;
+}
+
+function loadPuzzle(idx){
+  current = PUZZLES[idx];
+  players = buildPlayers(current);
+  queue = [];
+  pendingCandidates = null;
+  pendingItem = null;
+  frenzyUsed = false;
+  resolving = false;
+  document.getElementById('log').innerHTML='';
+  document.getElementById('result').className='result';
+  document.getElementById('result').innerHTML='';
+  document.getElementById('puzzleTitle').textContent = current.title;
+  document.getElementById('puzzleBlurb').textContent = current.blurb;
+  document.getElementById('frenzyBadgeWrap').innerHTML = current.frenzy ? `<span class="badge frenzy">Frenzy Active</span>` : '';
+  document.getElementById('btnBlock').disabled = false;
+  document.getElementById('btnBlock').textContent = 'Throw the Block';
+  renderSidebar(idx);
+  render();
+}
+
+function log(msg, cls){
+  const el = document.getElementById('log');
+  const line = document.createElement('div');
+  line.className = 'line' + (cls?(' '+cls):'');
+  line.textContent = msg;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+function findOccupant(r,c,excludeId){
+  for(const id in players){
+    const pl = players[id];
+    if(pl.id===excludeId) continue;
+    if(pl.status!=='onpitch') continue;
+    if(pl.r===r && pl.c===c) return pl;
+  }
+  return null;
+}
+
+function throwBlock(){
+  if(resolving) return;
+  resolving = true;
+  document.getElementById('btnBlock').disabled = true;
+  document.getElementById('result').className='result';
+  log(`${current.defender.label} is blocked — Push!`, 'chain');
+  queue = [{moverId:'defender', attackerPos:{r:players.attacker.r, c:players.attacker.c}}];
+  processNext();
+}
+
+function processNext(){
+  if(queue.length===0){
+    if(current.frenzy && !frenzyUsed && players.defender.status==='onpitch'){
+      frenzyUsed = true;
+      players.attacker.r = current.defender.r;
+      players.attacker.c = current.defender.c;
+      log('Frenzy! Attacker follows up and must block again.', 'frenzy');
+      queue.push({moverId:'defender', attackerPos:{r:players.attacker.r, c:players.attacker.c}});
+      render();
+      processNext();
+      return;
+    }
+    finishResolution();
+    return;
+  }
+  const item = queue.shift();
+  const mover = players[item.moverId];
+  if(!mover || mover.status!=='onpitch'){ processNext(); return; }
+  pendingItem = item;
+  pendingCandidates = getPushCandidates(item.attackerPos, {r:mover.r, c:mover.c});
+  render();
+}
+
+function onCandidateClick(sq){
+  const item = pendingItem;
+  const mover = players[item.moverId];
+  const prevPos = {r:mover.r, c:mover.c};
+  const off = offBoard(sq);
+  const occupant = !off ? findOccupant(sq.r, sq.c, mover.id) : null;
+
+  if(off){
+    mover.status = 'surfed';
+    mover.r = sq.r; mover.c = sq.c;
+    log(`${mover.label} is thrown into the crowd — SURF!`, 'surf');
+  } else if(occupant){
+    mover.r = sq.r; mover.c = sq.c;
+    log(`${mover.label} crashes into ${occupant.label} — chain push!`, 'chain');
+    queue.push({moverId:occupant.id, attackerPos:prevPos});
+  } else {
+    mover.r = sq.r; mover.c = sq.c;
+    log(`${mover.label} is shoved back but stays on his feet.`);
+  }
+  pendingItem = null;
+  pendingCandidates = null;
+  render();
+  processNext();
+}
+
+function finishResolution(){
+  resolving = false;
+  const success = current.check(players);
+  const el = document.getElementById('result');
+  if(success){
+    el.className = 'result show success';
+    el.innerHTML = '✔ Nailed it — objective off the pitch.';
+    solved.add(current.id);
+    renderSidebar(PUZZLES.indexOf(current));
+  } else {
+    el.className = 'result show fail';
+    el.innerHTML = '✖ Not quite. The objective is still on the pitch — reset and try another angle.';
+  }
+  document.getElementById('btnBlock').disabled = true;
+}
+
+/* ---------------- rendering ---------------- */
+function render(){
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  for(let row=0; row<9; row++){
+    for(let col=0; col<9; col++){
+      const r = row-1, c = col-1;
+      const cell = document.createElement('div');
+      const isPitch = r>=R_MIN && r<=R_MAX && c>=C_MIN && c<=C_MAX;
+      cell.className = 'cell ' + (isPitch ? ('pitch'+(((r+c)%2)?' alt':'')) : 'crowd');
+
+      const isCandidate = pendingCandidates && pendingCandidates.some(s=>s.r===r && s.c===c);
+      if(isCandidate){
+        cell.classList.add('candidate');
+        cell.title = 'Push here';
+        cell.addEventListener('click', ()=> onCandidateClick({r,c}));
+      }
+
+      const occ = Object.values(players).find(p=> p.r===r && p.c===c);
+      if(occ){
+        const tok = document.createElement('div');
+        tok.className = 'token ' + occ.team + (occ.isTarget?' target':'') + (occ.status==='surfed'?' surfed':'');
+        tok.textContent = occ.team==='attacker' ? 'A' : occ.label;
+        cell.appendChild(tok);
+      }
+      board.appendChild(cell);
+    }
+  }
+}
+
+function renderSidebar(activeIdx){
+  const basicWrap = document.getElementById('puzzleListBasic');
+  const frenzyWrap = document.getElementById('puzzleListFrenzy');
+  basicWrap.innerHTML = '';
+  frenzyWrap.innerHTML = '';
+  PUZZLES.forEach((pz, i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'puzzle-btn' + (i===activeIdx?' active':'') + (solved.has(pz.id)?' solved':'');
+    btn.innerHTML = `<span class="num">${solved.has(pz.id)?'✓':(i+1)}</span> ${pz.title}` + (pz.frenzy?'<span class="fz">FRZ</span>':'');
+    btn.addEventListener('click', ()=> loadPuzzle(i));
+    (pz.group==='frenzy'?frenzyWrap:basicWrap).appendChild(btn);
+  });
+}
+
+/* ---------------- controls ---------------- */
+document.getElementById('btnBlock').addEventListener('click', throwBlock);
+document.getElementById('btnReset').addEventListener('click', ()=> loadPuzzle(PUZZLES.indexOf(current)));
+document.getElementById('btnHint').addEventListener('click', ()=>{
+  log('Hint: ' + current.hint);
+});
+
+loadPuzzle(0);
+</script>
+</body>
+</html>
