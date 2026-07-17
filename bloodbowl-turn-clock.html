@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Turn Clock</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+  :root{
+    --turf-dark:#0F2016;
+    --turf-panel:#1A3324;
+    --turf-panel-active:#234630;
+    --line-yard:rgba(232,225,208,0.05);
+    --bone:#ECE6D6;
+    --bone-dim:#8FA394;
+    --blood:#C5333A;
+    --blood-dim:#7A2226;
+    --gold:#C9A227;
+    --gold-dim:#7A6620;
+    --border:#31543E;
+    --go:#4C9A4A;
+    --go-dim:#2E6B2C;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:
+      repeating-linear-gradient(90deg, transparent, transparent 68px, var(--line-yard) 68px, var(--line-yard) 70px),
+      var(--turf-dark);
+    color:var(--bone);
+    font-family:'Oswald',sans-serif;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:14px 14px 28px;
+    user-select:none;
+  }
+  .mono{ font-family:'Space Mono',monospace; font-variant-numeric:tabular-nums; }
+
+  /* ---- top bar ---- */
+  .topbar{
+    width:100%;
+    max-width:920px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:6px 4px 14px;
+    border-bottom:1px solid var(--border);
+    margin-bottom:16px;
+  }
+  .brand{
+    display:flex;
+    flex-direction:column;
+    line-height:1.05;
+  }
+  .brand .title{
+    font-weight:700;
+    font-size:1.05rem;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--gold);
+  }
+  .brand .phase{
+    font-size:0.72rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--bone-dim);
+    margin-top:2px;
+  }
+  .clocks{
+    display:flex;
+    gap:18px;
+    align-items:center;
+  }
+  .clockstat{ text-align:right; }
+  .clockstat .lbl{
+    font-size:0.6rem;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--bone-dim);
+  }
+  .clockstat .val{
+    font-size:0.95rem;
+    color:var(--bone);
+  }
+  .reset-btn{
+    background:none;
+    border:1px solid var(--border);
+    color:var(--bone-dim);
+    font-family:'Oswald',sans-serif;
+    font-size:0.65rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    padding:6px 10px;
+    border-radius:4px;
+    cursor:pointer;
+  }
+  .reset-btn.confirm{
+    color:var(--blood);
+    border-color:var(--blood);
+  }
+
+  /* ---- arena ---- */
+  .arena{
+    width:100%;
+    max-width:920px;
+    display:grid;
+    grid-template-columns:1fr 92px 1fr;
+    gap:14px;
+    align-items:stretch;
+  }
+  @media (max-width:680px){
+    .arena{ grid-template-columns:1fr; }
+    .center-col{ order:2; flex-direction:row !important; justify-content:center; gap:16px; padding:10px 0 !important;}
+  }
+
+  .panel{
+    background:var(--turf-panel);
+    border:2px solid var(--border);
+    border-radius:10px;
+    padding:18px 16px 16px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    cursor:pointer;
+    transition:background 0.2s, border-color 0.2s, transform 0.1s;
+    min-height:300px;
+  }
+  .panel:active{ transform:scale(0.995); }
+  .panel.active{
+    background:var(--turf-panel-active);
+    border-color:var(--gold-dim);
+    box-shadow:0 0 0 1px var(--gold-dim), 0 0 22px -6px rgba(201,162,39,0.35);
+  }
+  .panel.waiting{ opacity:0.72; }
+
+  .team-name{
+    background:transparent;
+    border:none;
+    color:var(--bone);
+    font-family:'Oswald',sans-serif;
+    font-weight:600;
+    font-size:1.1rem;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    text-align:center;
+    width:100%;
+    padding:2px;
+    border-bottom:1px dashed transparent;
+  }
+  .team-name:focus{ outline:none; border-bottom-color:var(--border); }
+
+  .turn-label{
+    font-size:0.75rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--bone-dim);
+  }
+  .panel.active .turn-label{ color:var(--gold); }
+
+  .pips{
+    display:flex;
+    gap:5px;
+    flex-wrap:wrap;
+    justify-content:center;
+    max-width:220px;
+  }
+  .pip{
+    width:22px;height:22px;
+    border-radius:50%;
+    border:1.5px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    font-size:0.62rem;
+    color:var(--bone-dim);
+    font-family:'Space Mono',monospace;
+  }
+  .pip.done{ background:var(--gold-dim); border-color:var(--gold); color:var(--bone); }
+  .pip.current{ border-color:var(--gold); color:var(--gold); box-shadow:0 0 0 2px rgba(201,162,39,0.25); }
+
+  .big-timer{
+    font-size:3.6rem;
+    font-weight:700;
+    line-height:1;
+    margin:8px 0 2px;
+    letter-spacing:0.01em;
+  }
+  .big-timer.warn{ color:var(--gold); }
+  .big-timer.urgent{ color:var(--blood); animation:pulse 1s infinite; }
+  .big-timer.dim{ color:var(--bone-dim); font-size:1.8rem; font-weight:400; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.45;} }
+
+  .tap-hint{
+    font-size:0.65rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--bone-dim);
+  }
+  .panel.active .tap-hint{ color:var(--gold); }
+
+  .clock-adjust{
+    display:flex;
+    gap:6px;
+    margin-top:4px;
+  }
+  .clock-adjust button{
+    background:rgba(232,225,208,0.06);
+    border:1px solid var(--border);
+    color:var(--bone-dim);
+    font-family:'Space Mono',monospace;
+    font-size:0.68rem;
+    padding:4px 7px;
+    border-radius:4px;
+    cursor:pointer;
+  }
+  .turn-stepper{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-top:2px;
+  }
+  .turn-stepper button{
+    background:rgba(232,225,208,0.06);
+    border:1px solid var(--border);
+    color:var(--bone-dim);
+    width:26px;height:26px;
+    border-radius:5px;
+    font-size:0.85rem;
+    cursor:pointer;
+  }
+  .turn-stepper span{
+    font-size:0.68rem;
+    color:var(--bone-dim);
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+  }
+
+  /* ---- center column ---- */
+  .center-col{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    padding-top:10px;
+  }
+  .toggle-btn{
+    width:72px;height:72px;
+    border-radius:50%;
+    background:var(--go);
+    border:3px solid #6FC26C;
+    color:var(--bone);
+    font-size:1.5rem;
+    cursor:pointer;
+    box-shadow:0 4px 14px -4px rgba(76,154,74,0.6);
+  }
+  .toggle-btn:disabled{
+    background:var(--border);
+    border-color:var(--border);
+    box-shadow:none;
+    cursor:default;
+    opacity:0.5;
+  }
+  .turnover-btn{
+    width:72px;height:72px;
+    border-radius:50%;
+    background:var(--blood);
+    border:3px solid #E8555C;
+    color:var(--bone);
+    font-size:0.62rem;
+    font-family:'Oswald',sans-serif;
+    font-weight:700;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    cursor:pointer;
+    box-shadow:0 4px 14px -4px rgba(197,51,58,0.6);
+  }
+  .turnover-btn:disabled{
+    background:var(--border);
+    border-color:var(--border);
+    box-shadow:none;
+    cursor:default;
+    opacity:0.5;
+  }
+  .toggle-lbl{
+    font-size:0.6rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--bone-dim);
+    text-align:center;
+  }
+  .turnover-count{
+    font-size:0.68rem;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--bone-dim);
+  }
+  .turnover-count .num{
+    color:var(--blood);
+    font-family:'Space Mono',monospace;
+    font-weight:700;
+  }
+  .pause-btn{
+    background:none;
+    border:1.5px solid var(--gold-dim);
+    color:var(--gold);
+    font-family:'Oswald',sans-serif;
+    font-size:0.7rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    padding:8px 12px;
+    border-radius:6px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .pause-btn:disabled{ opacity:0.35; cursor:default; }
+
+  /* ---- bottom control strip ---- */
+  .footer{
+    width:100%;
+    max-width:920px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
+    margin-top:22px;
+  }
+  .action-row{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+  .primary-btn{
+    background:var(--gold-dim);
+    border:1px solid var(--gold);
+    color:var(--bone);
+    font-family:'Oswald',sans-serif;
+    font-weight:600;
+    font-size:0.85rem;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    padding:12px 26px;
+    border-radius:6px;
+    cursor:pointer;
+  }
+  .halfnote{
+    font-size:0.72rem;
+    color:var(--bone-dim);
+    letter-spacing:0.04em;
+    text-align:center;
+    max-width:480px;
+  }
+  .kicking-hint{
+    font-size:0.68rem;
+    color:var(--gold);
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="title">Turn Clock</div>
+    <div class="phase" id="phaseLabel">Pre-match</div>
+  </div>
+  <div class="clocks">
+    <div class="clockstat">
+      <div class="lbl">Half Elapsed</div>
+      <div class="val mono" id="halfElapsedVal">0:00</div>
+    </div>
+    <div class="clockstat">
+      <div class="lbl">Match Elapsed</div>
+      <div class="val mono" id="overallVal">0:00</div>
+    </div>
+  </div>
+  <button class="reset-btn" id="resetBtn">New Match</button>
+</div>
+
+<div class="arena">
+  <div class="panel" id="panel1">
+    <input class="team-name" id="name1" value="Team A" maxlength="16">
+    <div class="turn-label" id="turnLabel1">Turn — / 8</div>
+    <div class="turnover-count" id="turnoverCount1">Turnovers: <span class="num">0</span></div>
+    <div class="pips" id="pips1"></div>
+    <div class="big-timer" id="timer1">4:00</div>
+    <div class="tap-hint" id="hint1">Tap to select</div>
+    <div class="clock-adjust" id="adjust1"></div>
+    <div class="turn-stepper" id="stepper1"></div>
+  </div>
+
+  <div class="center-col">
+    <button class="toggle-btn" id="toggleBtn" title="End turn">⇄</button>
+    <div class="toggle-lbl">End<br>Turn</div>
+    <button class="turnover-btn" id="turnoverBtn" title="Turnover">TURN<br>OVER</button>
+    <div class="toggle-lbl">Turnover<br>(+1 to team)</div>
+    <button class="pause-btn" id="pauseBtn">Start Match</button>
+  </div>
+
+  <div class="panel" id="panel2">
+    <input class="team-name" id="name2" value="Team B" maxlength="16">
+    <div class="turn-label" id="turnLabel2">Turn — / 8</div>
+    <div class="turnover-count" id="turnoverCount2">Turnovers: <span class="num">0</span></div>
+    <div class="pips" id="pips2"></div>
+    <div class="big-timer" id="timer2">4:00</div>
+    <div class="tap-hint" id="hint2">Tap to select</div>
+    <div class="clock-adjust" id="adjust2"></div>
+    <div class="turn-stepper" id="stepper2"></div>
+  </div>
+</div>
+
+<div class="footer">
+  <div id="kickingHint" class="kicking-hint" style="display:none;">Tap the team that goes first, then press Start</div>
+  <div class="action-row" id="actionRow"></div>
+  <div class="halfnote" id="halfNote"></div>
+</div>
+
+<script>
+const TURN_SECONDS = 240; // 4 minutes per turn
+const TURNS_PER_HALF = 8;
+
+let S = {
+  active: 1,
+  running: false,
+  turnSeconds: TURN_SECONDS,
+  buzzed: false,
+  p1Turns: 0,
+  p2Turns: 0,
+  half: 1,
+  phase: 'pre', // pre | playing | halftime | full
+  overall: 0,
+  halfElapsed: 0,
+  half1Total: null,
+  half2Total: null,
+  lastTs: null,
+  resetArmed: false,
+  p1Turnovers: 0,
+  p2Turnovers: 0
+};
+
+const el = id => document.getElementById(id);
+
+function fmtClock(sec){
+  sec = Math.max(0, Math.round(sec));
+  const m = Math.floor(sec/60);
+  const s = sec%60;
+  return m + ':' + String(s).padStart(2,'0');
+}
+function fmtLong(sec){
+  sec = Math.max(0, Math.round(sec));
+  const h = Math.floor(sec/3600);
+  const m = Math.floor((sec%3600)/60);
+  const s = sec%60;
+  if(h>0) return h+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  return m+':'+String(s).padStart(2,'0');
+}
+
+function beep(){
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'square';
+    o.frequency.value = 880;
+    g.gain.setValueAtTime(0.15, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+    o.connect(g); g.connect(ctx.destination);
+    o.start();
+    o.stop(ctx.currentTime + 0.5);
+  }catch(e){}
+}
+
+function buildPips(container, count, current){
+  container.innerHTML = '';
+  for(let i=1;i<=TURNS_PER_HALF;i++){
+    const d = document.createElement('div');
+    d.className = 'pip';
+    if(i<=count) d.className += ' done';
+    if(i === current) d.className += ' current';
+    d.textContent = i;
+    container.appendChild(d);
+  }
+}
+
+function render(){
+  // phase label
+  const phaseText = {
+    pre: 'Pre-match — select first team',
+    playing: 'Half ' + S.half + ' in progress',
+    halftime: 'Half Time',
+    full: 'Full Time'
+  }[S.phase];
+  el('phaseLabel').textContent = phaseText;
+
+  el('halfElapsedVal').textContent = fmtLong(S.halfElapsed);
+  el('overallVal').textContent = fmtLong(S.overall);
+
+  // team names editable only pre-match/halftime for safety not required; leave always editable
+  const p1turn = Math.min(S.p1Turns+1, TURNS_PER_HALF);
+  const p2turn = Math.min(S.p2Turns+1, TURNS_PER_HALF);
+  el('turnLabel1').textContent = S.p1Turns>=TURNS_PER_HALF ? 'Turns complete' : ('Turn ' + p1turn + ' / ' + TURNS_PER_HALF);
+  el('turnLabel2').textContent = S.p2Turns>=TURNS_PER_HALF ? 'Turns complete' : ('Turn ' + p2turn + ' / ' + TURNS_PER_HALF);
+
+  buildPips(el('pips1'), S.p1Turns, S.active===1 && S.phase==='playing' ? p1turn : null);
+  buildPips(el('pips2'), S.p2Turns, S.active===2 && S.phase==='playing' ? p2turn : null);
+
+  el('turnoverCount1').innerHTML = 'Turnovers: <span class="num">' + S.p1Turnovers + '</span>';
+  el('turnoverCount2').innerHTML = 'Turnovers: <span class="num">' + S.p2Turnovers + '</span>';
+
+  const panel1 = el('panel1'), panel2 = el('panel2');
+  panel1.classList.toggle('active', S.active===1 && S.phase==='playing');
+  panel2.classList.toggle('active', S.active===2 && S.phase==='playing');
+  panel1.classList.toggle('waiting', !(S.active===1 && S.phase==='playing'));
+  panel2.classList.toggle('waiting', !(S.active===2 && S.phase==='playing'));
+
+  // pre-match / halftime team selection highlight
+  if(S.phase==='pre' || S.phase==='halftime'){
+    panel1.classList.toggle('active', S.active===1);
+    panel2.classList.toggle('active', S.active===2);
+    panel1.classList.remove('waiting'); panel2.classList.remove('waiting');
+    if(S.active===2) panel2.classList.remove('waiting'); 
+  }
+
+  // timers
+  const t1 = el('timer1'), t2 = el('timer2');
+  function timerClasses(t, isActive){
+    t.classList.remove('warn','urgent','dim');
+    if(!isActive){ t.classList.add('dim'); return; }
+    if(S.turnSeconds<=10) t.classList.add('urgent');
+    else if(S.turnSeconds<=60) t.classList.add('warn');
+  }
+  if(S.phase==='playing'){
+    if(S.active===1){ t1.textContent = fmtClock(S.turnSeconds); t2.textContent = fmtClock(TURN_SECONDS); }
+    else { t2.textContent = fmtClock(S.turnSeconds); t1.textContent = fmtClock(TURN_SECONDS); }
+  } else {
+    t1.textContent = '4:00';
+    t2.textContent = '4:00';
+  }
+  timerClasses(t1, S.phase==='playing' && S.active===1);
+  timerClasses(t2, S.phase==='playing' && S.active===2);
+
+  el('hint1').textContent = S.phase==='pre' || S.phase==='halftime' ? (S.active===1?'Selected to start':'Tap to select') : (S.phase==='playing' && S.active===1 ? 'Tap to end turn' : 'On deck');
+  el('hint2').textContent = S.phase==='pre' || S.phase==='halftime' ? (S.active===2?'Selected to start':'Tap to select') : (S.phase==='playing' && S.active===2 ? 'Tap to end turn' : 'On deck');
+
+  el('kickingHint').style.display = (S.phase==='pre'||S.phase==='halftime') ? 'block' : 'none';
+
+  el('toggleBtn').disabled = (S.phase!=='playing');
+  el('turnoverBtn').disabled = (S.phase!=='playing');
+  el('pauseBtn').disabled = (S.phase!=='playing' && S.phase!=='pre');
+  if(S.phase==='pre') el('pauseBtn').textContent = 'Start Match';
+  else if(S.phase==='playing') el('pauseBtn').textContent = S.running ? 'Pause' : 'Resume';
+  else el('pauseBtn').textContent = '—';
+
+  renderActionRow();
+  renderAdjustControls();
+  renderHalfNote();
+}
+
+function renderHalfNote(){
+  let note = '';
+  if(S.half1Total !== null){
+    note += 'Half 1 length: ' + fmtLong(S.half1Total);
+  }
+  if(S.half2Total !== null){
+    note += (note?' · ':'') + 'Half 2 length: ' + fmtLong(S.half2Total);
+  }
+  if(S.phase==='full'){
+    note += (note?' · ':'') + 'Total match time: ' + fmtLong(S.overall);
+  }
+  el('halfNote').textContent = note;
+}
+
+function renderActionRow(){
+  const row = el('actionRow');
+  row.innerHTML = '';
+  if(S.phase==='pre'){
+    const b = document.createElement('button');
+    b.className = 'primary-btn';
+    b.textContent = 'Start Match';
+    b.onclick = startMatch;
+    row.appendChild(b);
+  } else if(S.phase==='halftime'){
+    const b = document.createElement('button');
+    b.className = 'primary-btn';
+    b.textContent = 'Start Second Half';
+    b.onclick = startSecondHalf;
+    row.appendChild(b);
+  } else if(S.phase==='full'){
+    const b = document.createElement('button');
+    b.className = 'primary-btn';
+    b.textContent = 'New Match';
+    b.onclick = doReset;
+    row.appendChild(b);
+  }
+}
+
+function renderAdjustControls(){
+  ['1','2'].forEach(n=>{
+    const adjustBox = el('adjust'+n);
+    const stepperBox = el('stepper'+n);
+    adjustBox.innerHTML = '';
+    stepperBox.innerHTML = '';
+    if(S.phase!=='playing'){ return; }
+    const isActive = (S.active===parseInt(n));
+
+    // clock adjust only for active team
+    if(isActive){
+      [[-30,'-30s'],[-10,'-10s'],[10,'+10s'],[30,'+30s']].forEach(([d,label])=>{
+        const btn = document.createElement('button');
+        btn.textContent = label;
+        btn.onclick = ()=> adjustClock(d);
+        adjustBox.appendChild(btn);
+      });
+    }
+
+    // turn stepper for both teams always available while playing
+    const minus = document.createElement('button');
+    minus.textContent = '−';
+    minus.onclick = ()=> adjustTurns(parseInt(n), -1);
+    const label = document.createElement('span');
+    label.textContent = 'turns done';
+    const plus = document.createElement('button');
+    plus.textContent = '+';
+    plus.onclick = ()=> adjustTurns(parseInt(n), 1);
+    stepperBox.appendChild(minus);
+    stepperBox.appendChild(label);
+    stepperBox.appendChild(plus);
+  });
+}
+
+function tick(){
+  if(S.running && S.phase==='playing'){
+    const now = performance.now();
+    const dt = (now - S.lastTs)/1000;
+    S.lastTs = now;
+    S.overall += dt;
+    S.halfElapsed += dt;
+    S.turnSeconds -= dt;
+    if(S.turnSeconds <= 0){
+      S.turnSeconds = 0;
+      if(!S.buzzed){ S.buzzed = true; beep(); }
+    }
+    render();
+  }
+  requestAnimationFrame(tick);
+}
+
+function selectTeam(n){
+  if(S.phase==='pre' || S.phase==='halftime'){
+    S.active = n;
+    render();
+  }
+}
+
+function panelTap(n){
+  if(S.phase==='pre' || S.phase==='halftime'){ selectTeam(n); return; }
+  if(S.phase==='playing' && S.active===n){ endTurn(); }
+}
+
+function endTurn(isTurnover){
+  if(S.phase!=='playing') return;
+  S.buzzed = false;
+  if(isTurnover){
+    if(S.active===1) S.p1Turnovers += 1;
+    else S.p2Turnovers += 1;
+  }
+  if(S.active===1) S.p1Turns = Math.min(TURNS_PER_HALF, S.p1Turns+1);
+  else S.p2Turns = Math.min(TURNS_PER_HALF, S.p2Turns+1);
+
+  if(S.p1Turns>=TURNS_PER_HALF && S.p2Turns>=TURNS_PER_HALF){
+    S.running = false;
+    if(S.half===1){ S.half1Total = S.halfElapsed; S.phase='halftime'; }
+    else { S.half2Total = S.halfElapsed; S.phase='full'; }
+    render();
+    return;
+  }
+  S.active = S.active===1 ? 2 : 1;
+  S.turnSeconds = TURN_SECONDS;
+  render();
+}
+
+function togglePause(){
+  if(S.phase==='pre'){ startMatch(); return; }
+  if(S.phase!=='playing') return;
+  S.running = !S.running;
+  if(S.running) S.lastTs = performance.now();
+  render();
+}
+
+function startMatch(){
+  S.phase='playing';
+  S.half=1;
+  S.p1Turns=0; S.p2Turns=0;
+  S.turnSeconds=TURN_SECONDS;
+  S.buzzed=false;
+  S.halfElapsed=0;
+  S.overall=0;
+  S.running=true;
+  S.lastTs=performance.now();
+  render();
+}
+
+function startSecondHalf(){
+  S.phase='playing';
+  S.half=2;
+  S.p1Turns=0; S.p2Turns=0;
+  S.turnSeconds=TURN_SECONDS;
+  S.buzzed=false;
+  S.halfElapsed=0;
+  S.running=true;
+  S.lastTs=performance.now();
+  render();
+}
+
+function adjustClock(delta){
+  if(S.phase!=='playing') return;
+  S.turnSeconds = Math.max(0, Math.min(TURN_SECONDS + 120, S.turnSeconds + delta));
+  if(S.turnSeconds>0) S.buzzed=false;
+  render();
+}
+
+function adjustTurns(n, delta){
+  if(S.phase!=='playing') return;
+  if(n===1) S.p1Turns = Math.max(0, Math.min(TURNS_PER_HALF, S.p1Turns + delta));
+  else S.p2Turns = Math.max(0, Math.min(TURNS_PER_HALF, S.p2Turns + delta));
+  render();
+}
+
+function doReset(){
+  S = {
+    active:1, running:false, turnSeconds:TURN_SECONDS, buzzed:false,
+    p1Turns:0, p2Turns:0, half:1, phase:'pre',
+    overall:0, halfElapsed:0, half1Total:null, half2Total:null,
+    lastTs:null, resetArmed:false,
+    p1Turnovers:0, p2Turnovers:0
+  };
+  el('resetBtn').classList.remove('confirm');
+  el('resetBtn').textContent = 'New Match';
+  render();
+}
+
+// wire up static controls
+el('panel1').addEventListener('click', (e)=>{ if(e.target.id==='name1') return; panelTap(1); });
+el('panel2').addEventListener('click', (e)=>{ if(e.target.id==='name2') return; panelTap(2); });
+el('toggleBtn').addEventListener('click', ()=>endTurn(false));
+el('turnoverBtn').addEventListener('click', ()=>endTurn(true));
+el('pauseBtn').addEventListener('click', togglePause);
+
+let resetTimeout = null;
+el('resetBtn').addEventListener('click', ()=>{
+  if(!S.resetArmed){
+    S.resetArmed = true;
+    el('resetBtn').classList.add('confirm');
+    el('resetBtn').textContent = 'Confirm?';
+    resetTimeout = setTimeout(()=>{
+      S.resetArmed=false;
+      el('resetBtn').classList.remove('confirm');
+      el('resetBtn').textContent = 'New Match';
+    }, 3000);
+  } else {
+    clearTimeout(resetTimeout);
+    doReset();
+  }
+});
+
+render();
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

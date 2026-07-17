@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How Many Dice? — Block Math Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --turf-dark:#122a1e;
+    --turf:#1b3b2a;
+    --turf-line:#3f6650;
+    --chalk:#eef3ea;
+    --chalk-dim:#a9c2b3;
+    --off:#3ecf72;
+    --off-dim:#1f5c3a;
+    --def:#e7b23e;
+    --def-dim:#6b5320;
+    --danger:#e2574c;
+    --card:#173424;
+    --card-2:#1d3f2b;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 50% -10%, #204a34 0%, var(--turf-dark) 55%);
+    color:var(--chalk);
+    font-family:'Inter',sans-serif;
+    padding:18px 12px 60px;
+    min-height:100vh;
+  }
+  .wrap{max-width:640px;margin:0 auto;}
+
+  header{text-align:center;margin-bottom:18px;}
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    letter-spacing:.25em;
+    font-size:11px;
+    color:var(--def);
+    text-transform:uppercase;
+  }
+  h1{
+    font-family:'Anton',sans-serif;
+    font-weight:400;
+    font-size:clamp(30px,8vw,42px);
+    letter-spacing:.03em;
+    margin:4px 0 2px;
+    color:var(--chalk);
+    text-shadow:0 2px 0 rgba(0,0,0,.35);
+  }
+  .sub{color:var(--chalk-dim);font-size:13px;}
+
+  .tabs{
+    display:flex;gap:6px;margin:18px 0 10px;
+    background:var(--card);border:1px solid var(--turf-line);
+    border-radius:12px;padding:4px;
+  }
+  .tab{
+    flex:1;text-align:center;padding:10px 4px;border-radius:9px;
+    font-size:12.5px;font-weight:700;cursor:pointer;color:var(--chalk-dim);
+    line-height:1.25;border:1px solid transparent;
+    transition:.15s;
+  }
+  .tab small{display:block;font-weight:500;font-size:10.5px;opacity:.8;margin-top:1px;}
+  .tab.active{background:var(--off-dim);color:#d9ffe6;border-color:var(--off);}
+
+  .statusbar{
+    display:flex;justify-content:space-between;align-items:center;
+    font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--chalk-dim);
+    margin:2px 4px 14px;
+  }
+  .statusbar b{color:var(--chalk);}
+
+  .legend{
+    display:flex;flex-wrap:wrap;gap:10px 16px;justify-content:center;
+    font-size:11px;color:var(--chalk-dim);margin-bottom:14px;
+  }
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .dot{width:11px;height:11px;border-radius:50%;display:inline-block;flex:none;}
+
+  .pitch{
+    background:
+      repeating-linear-gradient(180deg,var(--turf) 0 40px, #1f4530 40px 80px);
+    border:2px solid var(--turf-line);
+    border-radius:14px;
+    padding:10px 10px 4px;
+    box-shadow:inset 0 0 40px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.35);
+  }
+  .board-scroll{overflow-x:auto;}
+  .board{
+    display:grid;
+    gap:2px;
+    margin:0 auto;
+    width:max-content;
+  }
+  .cell{
+    width:clamp(38px,11vw,54px);
+    height:clamp(38px,11vw,54px);
+    border:1px solid rgba(238,243,234,.14);
+    border-radius:4px;
+    position:relative;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .token{
+    width:78%;height:78%;border-radius:50%;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-family:'IBM Plex Mono',monospace;font-weight:700;
+    position:relative;
+    box-shadow:0 2px 4px rgba(0,0,0,.4), inset 0 0 0 2px rgba(255,255,255,.08);
+  }
+  .token.off{background:var(--off);color:#0a2416;}
+  .token.def{background:var(--def);color:#3a2a05;}
+  .token .str{font-size:clamp(12px,3.4vw,16px);line-height:1;}
+  .token.marked{box-shadow:0 0 0 3px var(--chalk), 0 2px 6px rgba(0,0,0,.5);}
+  .role-badge{
+    position:absolute;top:-7px;left:-7px;
+    background:var(--turf-dark);color:var(--chalk);
+    border:2px solid var(--chalk);
+    border-radius:50%;width:20px;height:20px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:11px;font-weight:800;font-family:'IBM Plex Mono',monospace;
+  }
+  .guard-badge{
+    position:absolute;bottom:-6px;right:-6px;
+    background:#7a4fc9;color:#fff;border:2px solid var(--turf-dark);
+    border-radius:5px;width:17px;height:17px;font-size:9px;
+    display:flex;align-items:center;justify-content:center;font-weight:800;
+  }
+  .assist-ring{box-shadow:0 0 0 3px #ffffff, 0 0 10px 2px rgba(255,255,255,.6) !important;}
+
+  .colheads,.rowheads{
+    font-family:'IBM Plex Mono',monospace;color:var(--chalk-dim);font-size:11px;
+  }
+  .colheads{display:grid;gap:2px;width:max-content;margin:4px auto 8px;}
+  .colheads div{width:clamp(38px,11vw,54px);text-align:center;}
+
+  .answers{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:16px;
+  }
+  .ans-btn{
+    background:var(--card-2);border:1px solid var(--turf-line);color:var(--chalk);
+    border-radius:10px;padding:9px 3px 8px;text-align:center;cursor:pointer;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .ans-btn .letter{font-family:'Anton',sans-serif;font-size:20px;display:block;}
+  .ans-btn .desc{font-size:9.5px;color:var(--chalk-dim);display:block;margin-top:2px;line-height:1.25;}
+  .ans-btn:hover{border-color:var(--off);}
+  .ans-btn:disabled{cursor:default;}
+  .ans-btn.correct{background:var(--off-dim);border-color:var(--off);}
+  .ans-btn.wrong{background:#5a2320;border-color:var(--danger);}
+  .ans-btn.reveal{outline:2px dashed var(--off);}
+
+  .feedback{
+    margin-top:14px;background:var(--card);border:1px solid var(--turf-line);
+    border-radius:12px;padding:14px 16px;font-size:13.5px;line-height:1.55;
+    display:none;
+  }
+  .feedback.show{display:block;}
+  .feedback .verdict{font-family:'Anton',sans-serif;font-size:19px;letter-spacing:.02em;margin-bottom:4px;}
+  .feedback .verdict.ok{color:var(--off);}
+  .feedback .verdict.bad{color:var(--danger);}
+  .feedback .math{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--chalk-dim);}
+  .feedback .math b{color:var(--chalk);}
+
+  .controls{display:flex;gap:8px;margin-top:16px;}
+  .btn{
+    flex:1;padding:12px;border-radius:10px;border:1px solid var(--turf-line);
+    background:var(--card-2);color:var(--chalk);font-weight:700;font-size:14px;cursor:pointer;
+  }
+  .btn.primary{background:var(--off);color:#0a2416;border-color:var(--off);}
+  .btn:disabled{opacity:.4;cursor:default;}
+
+  .done-card{
+    text-align:center;padding:28px 16px;background:var(--card);border:1px solid var(--turf-line);
+    border-radius:14px;margin-top:10px;
+  }
+  .done-card h2{font-family:'Anton',sans-serif;font-size:26px;margin:0 0 6px;color:var(--def);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Coach's Whiteboard</div>
+    <h1>How Many Dice?</h1>
+    <div class="sub">Blood Bowl block math trainer — count the assists, call the dice.</div>
+  </header>
+
+  <div class="tabs" id="tabs"></div>
+  <div class="statusbar">
+    <span>Puzzle <b id="idxLabel">1</b> / <b id="totalLabel">50</b></span>
+    <span>Score <b id="scoreLabel">0/0</b></span>
+  </div>
+
+  <div class="legend">
+    <span><span class="dot" style="background:var(--off)"></span>Offense (attacker's team)</span>
+    <span><span class="dot" style="background:var(--def)"></span>Defense (target's team)</span>
+    <span><b style="color:var(--chalk)">B</b> = block attacker &nbsp; <b style="color:var(--chalk)">T</b> = target</span>
+  </div>
+
+  <div class="pitch">
+    <div class="board-scroll">
+      <div class="colheads" id="colheads"></div>
+      <div class="board" id="board"></div>
+    </div>
+  </div>
+
+  <div class="answers" id="answers"></div>
+  <div class="feedback" id="feedback"></div>
+
+  <div class="controls">
+    <button class="btn" id="skipBtn">Skip</button>
+    <button class="btn primary" id="nextBtn" disabled>Next Puzzle →</button>
+  </div>
+
+  <div class="done-card" id="doneCard" style="display:none;">
+    <h2 id="doneTitle">Set Complete!</h2>
+    <div class="sub" id="doneScore"></div>
+    <div class="controls" style="margin-top:16px;">
+      <button class="btn primary" id="restartBtn">Run It Back</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const MODES = [
+  {key:'basic',  label:'Base Line',   sub:'ST 3 vs ST 3',        total:200, strengths:false, guard:false},
+  {key:'mixed',  label:'Mismatch',    sub:'Varied strength',     total:200, strengths:true,  guard:false},
+  {key:'skills', label:'Guard Duty',  sub:'ST 3 + Guard skill',  total:200, strengths:false, guard:true},
+];
+const R=6, C=5;
+const COLS=['A','B','C','D','E'];
+
+let modeIdx = 0;
+let index = 0;       // puzzle number within session (0-based)
+let correctCount = 0;
+let attempted = 0;
+let current = null;
+let answered = false;
+
+const tabsEl = document.getElementById('tabs');
+const boardEl = document.getElementById('board');
+const colheadsEl = document.getElementById('colheads');
+const answersEl = document.getElementById('answers');
+const feedbackEl = document.getElementById('feedback');
+const nextBtn = document.getElementById('nextBtn');
+const skipBtn = document.getElementById('skipBtn');
+const doneCard = document.getElementById('doneCard');
+const idxLabel = document.getElementById('idxLabel');
+const totalLabel = document.getElementById('totalLabel');
+const scoreLabel = document.getElementById('scoreLabel');
+
+const ANSWER_DEFS = [
+  {letter:'A', dice:3, chooser:'defender', label:'3 Dice', tag:'Uphill — opp. picks'},
+  {letter:'B', dice:2, chooser:'defender', label:'2 Dice', tag:'Uphill — opp. picks'},
+  {letter:'C', dice:1, chooser:'attacker', label:'1 Die',  tag:'Even'},
+  {letter:'D', dice:2, chooser:'attacker', label:'2 Dice', tag:'You pick'},
+  {letter:'E', dice:3, chooser:'attacker', label:'3 Dice', tag:'You pick'},
+];
+
+boardEl.style.gridTemplateColumns = `repeat(${C}, 1fr)`;
+colheadsEl.style.gridTemplateColumns = `repeat(${C}, 1fr)`;
+COLS.forEach(l=>{ const d=document.createElement('div'); d.textContent=l; colheadsEl.appendChild(d); });
+
+function initTabs(){
+  tabsEl.innerHTML='';
+  MODES.forEach((m,i)=>{
+    const d=document.createElement('div');
+    d.className='tab'+(i===modeIdx?' active':'');
+    d.innerHTML = `${m.label}<small>${m.sub} · ${m.total}</small>`;
+    d.onclick = ()=>{ if(i!==modeIdx){ modeIdx=i; startSession(); } };
+    tabsEl.appendChild(d);
+  });
+}
+
+function rnd(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=rnd(0,i); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+function isAdj(a,b){ return Math.abs(a.row-b.row)<=1 && Math.abs(a.col-b.col)<=1 && !(a.row===b.row && a.col===b.col); }
+
+const STR_POOL = [2,2,3,3,3,3,3,3,4,4,5];
+function pickStrength(){ return STR_POOL[rnd(0,STR_POOL.length-1)]; }
+
+function generatePuzzle(mode){
+  const attacker = {row: rnd(1,R-2), col: rnd(1,C-2)};
+  const neigh = [];
+  for(let dr=-1; dr<=1; dr++) for(let dc=-1; dc<=1; dc++){
+    if(dr===0 && dc===0) continue;
+    const r=attacker.row+dr, c=attacker.col+dc;
+    if(r>=0 && r<R && c>=0 && c<C) neigh.push({row:r,col:c});
+  }
+  const target = neigh[rnd(0,neigh.length-1)];
+
+  const candidates=[];
+  for(let r=0;r<R;r++) for(let c=0;c<C;c++){
+    if((r===attacker.row&&c===attacker.col)||(r===target.row&&c===target.col)) continue;
+    const dA=Math.max(Math.abs(r-attacker.row),Math.abs(c-attacker.col));
+    const dT=Math.max(Math.abs(r-target.row),Math.abs(c-target.col));
+    if(dA<=2 || dT<=2) candidates.push({row:r,col:c});
+  }
+  shuffle(candidates);
+  const extraCount = rnd(2, Math.min(6, candidates.length));
+  const extras = candidates.slice(0, extraCount).map(pos=>({
+    row:pos.row, col:pos.col,
+    team: Math.random()<0.5 ? 'off' : 'def',
+  }));
+
+  const attackerP = {...attacker, team:'off', role:'B', str: mode.strengths?pickStrength():3, guard:false};
+  const targetP   = {...target,   team:'def', role:'T', str: mode.strengths?pickStrength():3, guard:false};
+  extras.forEach(p=>{
+    p.str = mode.strengths ? pickStrength() : 3;
+    p.guard = mode.guard ? (Math.random()<0.35) : false;
+    p.role = null;
+  });
+
+  const players = [attackerP, targetP, ...extras];
+
+  const offAssisters = players.filter(p =>
+    p.team==='off' && p!==attackerP && isAdj(p,targetP) &&
+    (p.guard || !players.some(y => y.team==='def' && y!==targetP && isAdj(p,y)))
+  );
+  const defAssisters = players.filter(p =>
+    p.team==='def' && p!==targetP && isAdj(p,attackerP) &&
+    (p.guard || !players.some(g => g.team==='off' && g!==attackerP && isAdj(p,g)))
+  );
+
+  const offStr = attackerP.str + offAssisters.length;
+  const defStr = targetP.str + defAssisters.length;
+
+  let answer;
+  if(offStr === defStr) answer='C';
+  else if(offStr > defStr) answer = (offStr > 2*defStr) ? 'E' : 'D';
+  else answer = (defStr > 2*offStr) ? 'A' : 'B';
+
+  return {players, attacker:attackerP, target:targetP, offAssisters, defAssisters, offStr, defStr, answer};
+}
+
+function renderBoard(p){
+  boardEl.innerHTML='';
+  const grid=[];
+  for(let r=0;r<R;r++){ grid.push(new Array(C).fill(null)); }
+  p.players.forEach(pl=>{ grid[pl.row][pl.col]=pl; });
+
+  for(let r=0;r<R;r++){
+    for(let c=0;c<C;c++){
+      const cell=document.createElement('div');
+      cell.className='cell';
+      const pl=grid[r][c];
+      if(pl){
+        const tok=document.createElement('div');
+        tok.className='token '+pl.team+(pl.role?' marked':'');
+        tok.dataset.ref = pl===p.attacker?'B':(pl===p.target?'T':'');
+        const str=document.createElement('div');
+        str.className='str';
+        str.textContent = pl.str;
+        tok.appendChild(str);
+        if(pl.role){
+          const rb=document.createElement('div');
+          rb.className='role-badge';
+          rb.textContent=pl.role;
+          tok.appendChild(rb);
+        }
+        if(pl.guard){
+          const gb=document.createElement('div');
+          gb.className='guard-badge';
+          gb.textContent='G';
+          tok.appendChild(gb);
+        }
+        cell.appendChild(tok);
+      }
+      boardEl.appendChild(cell);
+    }
+  }
+}
+
+function renderAnswers(){
+  answersEl.innerHTML='';
+  ANSWER_DEFS.forEach(a=>{
+    const b=document.createElement('button');
+    b.className='ans-btn';
+    b.innerHTML = `<span class="letter">${a.letter}</span><span class="desc">${a.label}<br>${a.tag}</span>`;
+    b.onclick = ()=>selectAnswer(a.letter);
+    b.id = 'ans-'+a.letter;
+    answersEl.appendChild(b);
+  });
+}
+
+function selectAnswer(letter){
+  if(answered) return;
+  answered = true;
+  attempted++;
+  const correct = letter === current.answer;
+  if(correct) correctCount++;
+
+  document.querySelectorAll('.ans-btn').forEach(b=>b.disabled=true);
+  document.getElementById('ans-'+letter).classList.add(correct?'correct':'wrong');
+  if(!correct) document.getElementById('ans-'+current.answer).classList.add('reveal');
+
+  // ring the assisting tokens
+  document.querySelectorAll('.token').forEach((tok,i)=>{});
+  highlightAssists();
+
+  const off=current.offStr, def=current.defStr;
+  const oN=current.offAssisters.length, dN=current.defAssisters.length;
+  const aDef = ANSWER_DEFS.find(a=>a.letter===current.answer);
+
+  feedbackEl.className='feedback show';
+  feedbackEl.innerHTML = `
+    <div class="verdict ${correct?'ok':'bad'}">${correct?'Correct call.':'Missed one — correct answer: '+current.answer}</div>
+    <div class="math">
+      Attacker: ST<b>${current.attacker.str}</b> + ${oN} assist${oN===1?'':'s'} = <b>${off}</b><br>
+      Defender: ST<b>${current.target.str}</b> + ${dN} assist${dN===1?'':'s'} = <b>${def}</b><br>
+      Result: <b>${aDef.dice} dice</b>, ${aDef.chooser === 'attacker' ? 'attacker chooses' : 'defender (target) chooses'}
+    </div>
+  `;
+
+  nextBtn.disabled=false;
+  skipBtn.disabled=true;
+  updateStatus();
+}
+
+function highlightAssists(){
+  const cells = boardEl.children;
+  let i=0;
+  for(let r=0;r<R;r++){
+    for(let c=0;c<C;c++){
+      const cell = cells[i++];
+      const tok = cell.firstChild;
+      if(!tok) continue;
+      const pl = current.players.find(p=>p.row===r&&p.col===c);
+      if(current.offAssisters.includes(pl) || current.defAssisters.includes(pl)){
+        tok.classList.add('assist-ring');
+      }
+    }
+  }
+}
+
+function updateStatus(){
+  const mode = MODES[modeIdx];
+  idxLabel.textContent = Math.min(index+1, mode.total);
+  totalLabel.textContent = mode.total;
+  scoreLabel.textContent = `${correctCount}/${attempted}`;
+}
+
+function loadPuzzle(){
+  const mode = MODES[modeIdx];
+  if(index >= mode.total){ showDone(); return; }
+  doneCard.style.display='none';
+  boardEl.parentElement.parentElement.style.display='';
+  answersEl.style.display='';
+  current = generatePuzzle(mode);
+  answered = false;
+  renderBoard(current);
+  renderAnswers();
+  feedbackEl.className='feedback';
+  feedbackEl.innerHTML='';
+  nextBtn.disabled=true;
+  skipBtn.disabled=false;
+  updateStatus();
+}
+
+function showDone(){
+  document.querySelector('.pitch').style.display='none';
+  answersEl.style.display='none';
+  feedbackEl.className='feedback';
+  nextBtn.style.display='none';
+  skipBtn.style.display='none';
+  doneCard.style.display='block';
+  document.getElementById('doneScore').textContent = `Final score: ${correctCount} / ${attempted}`;
+}
+
+function startSession(){
+  index=0; correctCount=0; attempted=0;
+  document.querySelector('.pitch').style.display='';
+  nextBtn.style.display='';
+  skipBtn.style.display='';
+  initTabs();
+  loadPuzzle();
+}
+
+nextBtn.onclick = ()=>{ index++; loadPuzzle(); };
+skipBtn.onclick = ()=>{ index++; loadPuzzle(); };
+document.getElementById('restartBtn').onclick = startSession;
+
+startSession();
+</script>
+</body>
+</html>

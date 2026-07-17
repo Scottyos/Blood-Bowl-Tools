@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blood Bowl 2025 — Skill Trainer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Special+Elite&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+  :root{
+    --pitch: #14231a;
+    --pitch-line: #2c4232;
+    --parchment: #e9dfc7;
+    --parchment-dim: #cbbf9e;
+    --blood: #9c1f1f;
+    --blood-bright: #c22b2b;
+    --ink: #201a12;
+    --gold: #c9a24b;
+    --card-shadow: rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'IBM Plex Sans', sans-serif;
+    background:
+      radial-gradient(ellipse at top, #1c3324 0%, var(--pitch) 60%, #0c150f 100%);
+    color: var(--parchment);
+    min-height:100vh;
+    padding-bottom:40px;
+  }
+  .stripes{
+    position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.05;
+    background:repeating-linear-gradient(90deg, #fff 0 2px, transparent 2px 60px);
+  }
+  header{
+    position:relative; z-index:1;
+    text-align:center; padding:28px 16px 18px;
+    border-bottom:3px solid var(--blood);
+    background:linear-gradient(180deg, rgba(0,0,0,.25), transparent);
+  }
+  header h1{
+    font-family:'Oswald', sans-serif;
+    font-weight:700;
+    font-size:clamp(1.6rem, 6vw, 2.4rem);
+    letter-spacing:1px;
+    margin:0;
+    color: var(--parchment);
+    text-transform:uppercase;
+    text-shadow: 2px 2px 0 var(--blood), 4px 4px 8px rgba(0,0,0,.6);
+  }
+  header .sub{
+    font-family:'Special Elite', cursive;
+    color: var(--gold);
+    font-size:.85rem;
+    margin-top:6px;
+    letter-spacing:.5px;
+  }
+
+  main{max-width:640px; margin:0 auto; padding:18px 16px; position:relative; z-index:1;}
+
+  .mode-bar{
+    display:flex; gap:8px; margin-bottom:16px;
+  }
+  .mode-btn{
+    flex:1; padding:10px 6px; border-radius:8px; border:2px solid var(--pitch-line);
+    background:rgba(0,0,0,.25); color:var(--parchment-dim);
+    font-family:'Oswald',sans-serif; font-weight:600; letter-spacing:.5px;
+    font-size:.85rem; text-transform:uppercase; cursor:pointer;
+    transition:all .15s;
+  }
+  .mode-btn.active{
+    background:var(--blood); border-color:var(--blood-bright); color:#fff;
+  }
+
+  select{
+    width:100%; padding:10px 12px; border-radius:8px; margin-bottom:14px;
+    background:rgba(0,0,0,.35); color:var(--parchment); border:2px solid var(--pitch-line);
+    font-family:'IBM Plex Sans',sans-serif; font-size:.95rem;
+  }
+
+  .stat-row{
+    display:flex; justify-content:space-between; font-family:'Oswald',sans-serif;
+    font-size:.85rem; color:var(--gold); margin-bottom:10px; letter-spacing:.5px;
+  }
+
+  /* FLASHCARD */
+  .card{
+    background: linear-gradient(160deg, #f3ead2, var(--parchment) 60%, #ddd0ab);
+    color: var(--ink);
+    border-radius:14px;
+    padding:26px 22px;
+    min-height:230px;
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    text-align:center;
+    box-shadow: 0 10px 24px var(--card-shadow), inset 0 0 0 3px rgba(156,31,31,.15);
+    cursor:pointer;
+    position:relative;
+    border:2px solid #b7a878;
+  }
+  .card .tag{
+    position:absolute; top:12px; left:12px;
+    font-family:'Oswald',sans-serif; font-size:.65rem; text-transform:uppercase;
+    background:var(--blood); color:#fff; padding:3px 8px; border-radius:5px; letter-spacing:.5px;
+  }
+  .card .kind{
+    position:absolute; top:12px; right:12px;
+    font-family:'Oswald',sans-serif; font-size:.65rem; text-transform:uppercase;
+    background:var(--ink); color:var(--gold); padding:3px 8px; border-radius:5px; letter-spacing:.5px;
+  }
+  .card h2{
+    font-family:'Oswald',sans-serif; font-size:1.5rem; margin:8px 0 12px;
+    text-transform:uppercase; letter-spacing:.5px;
+  }
+  .card p{
+    font-family:'Special Elite', cursive; font-size:.95rem; line-height:1.5; margin:0;
+  }
+  .card .hint{
+    margin-top:16px; font-size:.75rem; color:#8a7c55; font-family:'IBM Plex Sans';
+  }
+  .flip-controls{ display:flex; gap:10px; margin-top:14px; }
+  .flip-controls button{
+    flex:1; padding:12px; border-radius:8px; border:none; cursor:pointer;
+    font-family:'Oswald',sans-serif; font-weight:600; letter-spacing:.5px; text-transform:uppercase;
+    font-size:.85rem;
+  }
+  .btn-prev{ background:var(--pitch-line); color:var(--parchment); }
+  .btn-next{ background:var(--blood); color:#fff; }
+
+  /* QUIZ */
+  .q-card{
+    background: linear-gradient(160deg, #f3ead2, var(--parchment) 60%, #ddd0ab);
+    color: var(--ink);
+    border-radius:14px;
+    padding:22px;
+    box-shadow: 0 10px 24px var(--card-shadow);
+    border:2px solid #b7a878;
+  }
+  .q-prompt{
+    font-family:'Special Elite', cursive;
+    font-size:1rem;
+    line-height:1.55;
+    margin-bottom:16px;
+  }
+  .choice{
+    display:block; width:100%; text-align:left; padding:12px 14px; margin-bottom:9px;
+    border-radius:8px; border:2px solid #b7a878; background:#fbf5e4;
+    font-family:'Oswald',sans-serif; font-weight:500; color:var(--ink); font-size:.95rem;
+    cursor:pointer; transition:all .12s;
+  }
+  .choice:hover{ background:#f0e6c8; }
+  .choice.correct{ background:#2e6b34; border-color:#1e4d24; color:#fff; }
+  .choice.wrong{ background:var(--blood); border-color:var(--blood-bright); color:#fff; }
+  .choice[disabled]{ cursor:default; }
+
+  .next-q{
+    margin-top:12px; width:100%; padding:12px; border:none; border-radius:8px;
+    background:var(--gold); color:var(--ink); font-family:'Oswald',sans-serif;
+    font-weight:700; text-transform:uppercase; letter-spacing:.5px; cursor:pointer; font-size:.9rem;
+    display:none;
+  }
+  .next-q.show{ display:block; }
+
+  .score-banner{
+    text-align:center; font-family:'Oswald',sans-serif; margin-top:18px; color:var(--gold);
+    font-size:.95rem;
+  }
+  .reset-link{
+    display:block; text-align:center; margin-top:10px; color:var(--parchment-dim);
+    font-size:.8rem; cursor:pointer; text-decoration:underline;
+  }
+
+  /* TACTICS */
+  .sub-toggle{ display:flex; gap:8px; margin-bottom:14px; }
+  .sub-toggle button{
+    flex:1; padding:9px 6px; border-radius:8px; border:2px solid var(--pitch-line);
+    background:transparent; color:var(--parchment-dim);
+    font-family:'Oswald',sans-serif; font-weight:600; font-size:.78rem; letter-spacing:.4px;
+    text-transform:uppercase; cursor:pointer;
+  }
+  .sub-toggle button.active{ background:var(--gold); color:var(--ink); border-color:var(--gold); }
+
+  .topic-list{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+  .topic-chip{
+    padding:7px 12px; border-radius:20px; border:2px solid var(--pitch-line);
+    background:rgba(0,0,0,.25); color:var(--parchment-dim); font-size:.78rem;
+    font-family:'Oswald',sans-serif; letter-spacing:.3px; cursor:pointer;
+  }
+  .topic-chip.active{ background:var(--blood); border-color:var(--blood-bright); color:#fff; }
+
+  .guide-card{
+    background: linear-gradient(160deg, #f3ead2, var(--parchment) 60%, #ddd0ab);
+    color: var(--ink); border-radius:14px; padding:20px 20px 16px;
+    box-shadow: 0 10px 24px var(--card-shadow); border:2px solid #b7a878;
+  }
+  .guide-card h3{
+    font-family:'Oswald',sans-serif; text-transform:uppercase; letter-spacing:.5px;
+    margin:0 0 4px; font-size:1.25rem; color:var(--blood);
+  }
+  .guide-card .goal{
+    font-family:'Special Elite',cursive; font-size:.85rem; color:#5a4d33; margin-bottom:12px;
+  }
+  .guide-card ul{ margin:0; padding-left:20px; }
+  .guide-card li{ margin-bottom:9px; line-height:1.45; font-size:.92rem; }
+  .guide-card li b{ color:var(--blood); }
+
+  .scenario-tag{
+    display:inline-block; font-family:'Oswald',sans-serif; font-size:.65rem;
+    text-transform:uppercase; background:var(--ink); color:var(--gold);
+    padding:3px 9px; border-radius:5px; margin-bottom:10px; letter-spacing:.5px;
+  }
+  .explain-box{
+    margin-top:14px; padding:12px 14px; background:rgba(46,107,52,.12);
+    border-left:4px solid #2e6b34; border-radius:6px; font-size:.88rem; line-height:1.5;
+    display:none;
+  }
+  .explain-box.show{ display:block; }
+  .explain-box b{ color:var(--blood); }
+</style>
+</head>
+<body>
+<div class="stripes"></div>
+<header>
+  <h1>🏈 Blood Bowl Skill Trainer</h1>
+  <div class="sub">Third Season Edition (2025) — Skills, Traits &amp; Tactics</div>
+</header>
+
+<main>
+  <div class="mode-bar">
+    <button class="mode-btn active" data-mode="flash">Flashcards</button>
+    <button class="mode-btn" data-mode="quiz">Skill Quiz</button>
+    <button class="mode-btn" data-mode="tactics">Tactics</button>
+  </div>
+
+  <select id="categorySelect"></select>
+
+  <div id="flashArea"></div>
+  <div id="quizArea" style="display:none;"></div>
+  <div id="tacticsArea" style="display:none;"></div>
+</main>
+
+<script>
+const DATA = [
+// GENERAL
+{name:"Block", cat:"General", kind:"Elite / Active", desc:"Lets you shrug off a Both Down result in a block you're part of — you just don't fall over."},
+{name:"Dauntless", cat:"General", kind:"Active", desc:"Rolls a die and adds it to your Strength when blocking a stronger opponent, letting scrawny players occasionally match brutes."},
+{name:"Fend", cat:"General", kind:"Active", desc:"Stops the opposing player from following up into your square after they push you back."},
+{name:"Frenzy", cat:"General", kind:"Active", desc:"Forces you to always follow up after pushing an opponent back, and to throw a second block at the same target if they're still standing."},
+{name:"Kick", cat:"General", kind:"Active", desc:"The kicking player can shave squares off how far the ball scatters at kick-off."},
+{name:"Pro", cat:"General", kind:"Active", desc:"Once a turn, lets you re-roll a single failed die by rolling a 4+ first, without burning a team re-roll."},
+{name:"Steady Footing", cat:"General", kind:"Active", desc:"Re-rolls a failed Dodge, and turns a Stumble result against you into a plain Push Back instead."},
+{name:"Strip Ball", cat:"General", kind:"Active", desc:"Knocks the ball loose from a carrier who's pushed back by your block, even without knocking them down."},
+{name:"Sure Hands", cat:"General", kind:"Active", desc:"Grants a re-roll for picking up the ball and makes it harder for opponents to strip it from you."},
+{name:"Tackle", cat:"General", kind:"Active", desc:"Cancels the Dodge skill (and similar tricks) for opponents you block, making them fall more easily."},
+{name:"Taunt", cat:"General", kind:"Active", desc:"Can force an opposing player to lose their action arguing back instead of doing something useful."},
+{name:"Wrestle", cat:"General", kind:"Active", desc:"Turns a Both Down result into both players simply lying down — no armour roll, no risk of injury from that result."},
+
+// AGILITY
+{name:"Catch", cat:"Agility", kind:"Active", desc:"Grants a re-roll on any failed attempt to catch the ball."},
+{name:"Defensive", cat:"Agility", kind:"Active", desc:"Cancels an opposing player's assist bonus during blocks made against your team-mates near you."},
+{name:"Diving Catch", cat:"Agility", kind:"Active", desc:"Lets you attempt to catch a pass, kick-off, or throw-in landing in your tackle zone, with a bonus to the roll."},
+{name:"Diving Tackle", cat:"Agility", kind:"Active", desc:"Lets you throw yourself (going prone) to impose a penalty on a nearby opponent's dodge roll."},
+{name:"Dodge", cat:"Agility", kind:"Elite / Active", desc:"Grants a re-roll when dodging out of a tackle zone, and softens a Stumble result against you into a Push Back."},
+{name:"Hit and Run", cat:"Agility", kind:"Active", desc:"Lets you take a free move after a block, so long as you weren't pushed back yourself."},
+{name:"Jump Up", cat:"Agility", kind:"Active", desc:"Lets a prone player stand up and act without spending the usual movement cost."},
+{name:"Leap", cat:"Agility", kind:"Active", desc:"Allows jumping over an occupied or dangerous square instead of walking around it, with an Agility test."},
+{name:"Safe Pair of Hands", cat:"Agility", kind:"Active", desc:"Stops the ball bouncing away when you're knocked down while carrying it — it just drops in your square."},
+{name:"Sidestep", cat:"Agility", kind:"Active", desc:"Lets you choose which square you're pushed into, rather than the opponent choosing."},
+{name:"Sprint", cat:"Agility", kind:"Active", desc:"Improves your odds when rushing (going beyond your normal Movement) by adding an extra die and taking the best."},
+{name:"Sure Feet", cat:"Agility", kind:"Active", desc:"Grants a re-roll when rushing (going beyond your normal Movement allowance)."},
+
+// PASSING
+{name:"Accurate", cat:"Passing", kind:"Active", desc:"Improves the odds of a short or quick pass landing on target."},
+{name:"Cannoneer", cat:"Passing", kind:"Active", desc:"Boosts the range and reliability of your longest, hardest throws."},
+{name:"Cloud Burster", cat:"Passing", kind:"Active", desc:"Makes throws that would otherwise sail wildly less likely to go badly wrong."},
+{name:"Dump-off", cat:"Passing", kind:"Active", desc:"Lets you throw the ball away for free the instant you're about to be blocked, before the block is even resolved."},
+{name:"Give and Go", cat:"Passing", kind:"Active", desc:"Lets you make a short move after completing a successful pass."},
+{name:"Hail Mary Pass", cat:"Passing", kind:"Active", desc:"Allows a desperate throw anywhere on the pitch with no range limit, though accuracy suffers."},
+{name:"Leader", cat:"Passing", kind:"Passive", desc:"Grants your team an extra team re-roll for as long as this player is on the pitch."},
+{name:"Nerves of Steel", cat:"Passing", kind:"Active", desc:"Ignores penalties from being marked when throwing, handing off, or catching."},
+{name:"On the Ball", cat:"Passing", kind:"Active", desc:"Lets you move toward a loose ball as soon as it's kicked, before the receiving team's turn even starts."},
+{name:"Pass", cat:"Passing", kind:"Active", desc:"Grants a re-roll on a failed passing attempt."},
+{name:"Punt", cat:"Passing", kind:"Active", desc:"Improves how a kick-off can be aimed and controlled."},
+{name:"Safe Pass", cat:"Passing", kind:"Active", desc:"Stops a fumbled pass from causing a turnover — it just falls incomplete instead."},
+
+// STRENGTH
+{name:"Arm Bar", cat:"Strength", kind:"Active", desc:"Boosts the injury roll against an opponent you've pushed back into a crowd or hazard."},
+{name:"Brawler", cat:"Strength", kind:"Active", desc:"Turns a Both Down result from a block into a win for you when there's no assist either way."},
+{name:"Break Tackle", cat:"Strength", kind:"Active", desc:"Boosts your Strength for a single dodge roll, making it easier to slip away from strong markers."},
+{name:"Bullseye", cat:"Strength", kind:"Active", desc:"Improves accuracy when throwing a team-mate at a specific target."},
+{name:"Grab", cat:"Strength", kind:"Active", desc:"Lets you choose which square an opponent is pushed into after a block."},
+{name:"Guard", cat:"Strength", kind:"Elite / Active", desc:"Keeps assisting a team-mate's block or defense even when you'd normally be too outnumbered to help."},
+{name:"Juggernaut", cat:"Strength", kind:"Active", desc:"Turns a Stumble result into a Push Back when blitzing, and ignores certain block-based skills used against you."},
+{name:"Mighty Blow", cat:"Strength", kind:"Elite / Active", desc:"Adds a bonus to the armour or injury roll after knocking someone down in a block."},
+{name:"Multiple Block", cat:"Strength", kind:"Active", desc:"Lets you throw a block at two adjacent opponents at once in a single action."},
+{name:"Stand Firm", cat:"Strength", kind:"Active", desc:"Lets you choose to not be pushed back by a block at all."},
+{name:"Strong Arm", cat:"Strength", kind:"Active", desc:"Improves the roll when throwing a team-mate down the pitch."},
+{name:"Thick Skull", cat:"Strength", kind:"Passive", desc:"Reduces the chance of being knocked out (rather than just stunned) on the injury table."},
+
+// DEVIOUS
+{name:"Dirty Player", cat:"Devious", kind:"Active", desc:"Adds a bonus to the armour or injury roll specifically when fouling."},
+{name:"Eye Gouge", cat:"Devious", kind:"Active", desc:"Boosts a foul's injury roll further, at extra risk of being sent off if caught."},
+{name:"Fumblerooski", cat:"Devious", kind:"Active", desc:"Lets you leave the ball behind on the ground as you move, instead of carrying it further."},
+{name:"Lethal Flight", cat:"Devious", kind:"Active", desc:"Adds a bonus to injury when a team-mate you've thrown lands on and flattens an opponent."},
+{name:"Lone Fouler", cat:"Devious", kind:"Active", desc:"Grants a re-roll on a foul's armour roll when fouling without any assists."},
+{name:"Pile Driver", cat:"Devious", kind:"Active", desc:"Lets you follow up a successful knockdown block with an automatic free foul on the same opponent."},
+{name:"Put the Boot In", cat:"Devious", kind:"Active", desc:"Lets you deliver a stomp on a prone opponent adjacent to you as a special action."},
+{name:"Quick Foul", cat:"Devious", kind:"Active", desc:"Lowers the risk of being caught and sent off when fouling."},
+{name:"Saboteur", cat:"Devious", kind:"Passive", desc:"Can trigger a hidden weapon against whoever knocks you down, at the risk of harming yourself too."},
+{name:"Shadowing", cat:"Devious", kind:"Active", desc:"Lets you try to stick to an opponent's heels as they try to dodge away from you."},
+{name:"Sneaky Git", cat:"Devious", kind:"Active", desc:"Protects you from being sent off on a natural double when fouling, unless the target's armour actually breaks."},
+{name:"Violent Innovator", cat:"Devious", kind:"Active", desc:"Earns you credit toward star player points when a special action of yours causes a casualty."},
+
+// MUTATIONS
+{name:"Big Hand", cat:"Mutations", kind:"Active", desc:"Ignores penalties for picking up the ball in heavy rain or other tricky conditions."},
+{name:"Claws", cat:"Mutations", kind:"Passive", desc:"Ignores an opponent's armour bonus, making it easier to injure well-armoured players."},
+{name:"Disturbing Presence", cat:"Mutations", kind:"Passive", desc:"Imposes a penalty on opposing passes and catches attempted near you."},
+{name:"Extra Arms", cat:"Mutations", kind:"Active", desc:"Improves the odds of catching, intercepting, or picking up the ball."},
+{name:"Foul Appearance", cat:"Mutations", kind:"Passive", desc:"Can cause opponents to flinch and waste their block action against you entirely."},
+{name:"Horns", cat:"Mutations", kind:"Active", desc:"Adds a bonus to Strength specifically when blitzing."},
+{name:"Iron Hard Skin", cat:"Mutations", kind:"Passive", desc:"Reduces the effectiveness of skills like Claws being used against your armour."},
+{name:"Monstrous Mouth", cat:"Mutations", kind:"Active", desc:"Improves catching rolls and softens the risk of a fumbled catch."},
+{name:"Prehensile Tail", cat:"Mutations", kind:"Active", desc:"Imposes a penalty on opponents trying to dodge away from you."},
+{name:"Tentacles", cat:"Mutations", kind:"Active", desc:"Can grapple an adjacent opponent trying to dodge away, contested by a Strength roll-off."},
+{name:"Two Heads", cat:"Mutations", kind:"Active", desc:"Grants a bonus when attempting to dodge out of a tackle zone."},
+{name:"Very Long Legs", cat:"Mutations", kind:"Active", desc:"Improves your odds when leaping or jumping, and helps you intercept passes."},
+
+// TRAITS
+{name:"Always Hungry", cat:"Traits", kind:"Active", desc:"Risks eating the team-mate you're trying to throw, instead of completing the throw."},
+{name:"Animal Savagery", cat:"Traits", kind:"Passive", desc:"Forces a roll before this player can safely block a team-mate, or they may attack them instead."},
+{name:"Animosity (X)", cat:"Traits", kind:"Active", desc:"Requires a roll before this player will hand the ball off or assist certain team-mates of a specific type."},
+{name:"Ball and Chain", cat:"Traits", kind:"Active", desc:"Moves in a random direction each activation, smashing through anyone in the way, but can't be directly controlled."},
+{name:"Bloodlust (X+)", cat:"Traits", kind:"Passive", desc:"Forces this player to bite a nearby team-mate for blood or suffer themselves, each turn."},
+{name:"Bombardier", cat:"Traits", kind:"Active", desc:"Lets this player throw a bomb at a target square as a special action."},
+{name:"Bone Head", cat:"Traits", kind:"Passive", desc:"Requires a roll before activating; on a fail, the player is too dim to do anything that turn."},
+{name:"Breathe Fire", cat:"Traits", kind:"Active", desc:"Lets this player torch an adjacent square, potentially injuring whoever's standing there."},
+{name:"Chainsaw", cat:"Traits", kind:"Active", desc:"Lets this player attack with a chainsaw instead of a normal block, with its own randomness and risks."},
+{name:"Decay", cat:"Traits", kind:"Passive", desc:"Lets this player shrug off the first serious injury result of a game as something less severe."},
+{name:"Drunkard", cat:"Traits", kind:"Active", desc:"Requires a roll to reduce a Bone-Head-style failure, in exchange for a drink first."},
+{name:"Hatred (X)", cat:"Traits", kind:"Active", desc:"Grants extra dice or bonuses when blocking specific hated opponent types."},
+{name:"Hypnotic Gaze", cat:"Traits", kind:"Active", desc:"Can freeze a nearby standing opponent in place, stopping them from assisting."},
+{name:"Insignificant", cat:"Traits", kind:"Passive", desc:"Makes it harder for this player to contribute an assist to a team-mate's block."},
+{name:"Kick Team-mate", cat:"Traits", kind:"Active", desc:"Lets a player boot a team-mate with the Right Stuff trait down the pitch as a special action."},
+{name:"Loner (X+)", cat:"Traits", kind:"Passive", desc:"Requires a roll before this player may benefit from a team re-roll at all."},
+{name:"My Ball", cat:"Traits", kind:"Passive", desc:"Reflects a player who always keeps hold of a bomb or similar object rather than passing it on."},
+{name:"No Ball", cat:"Traits", kind:"Passive", desc:"Marks a player who simply cannot handle the ball in any way."},
+{name:"Pick-me-up", cat:"Traits", kind:"Active", desc:"Lets a team-mate help a Ball-and-Chain-style player back onto their feet."},
+{name:"Plague Ridden", cat:"Traits", kind:"Passive", desc:"Can spread a nasty effect to an opponent this player knocks down in a block."},
+{name:"Pogo Stick", cat:"Traits", kind:"Active", desc:"Lets this player bounce over obstacles in a distinctive, unpredictable way."},
+{name:"Projectile Vomit", cat:"Traits", kind:"Active", desc:"Lets this player launch an unpleasant ranged attack instead of a normal action."},
+{name:"Really Stupid", cat:"Traits", kind:"Passive", desc:"Requires a roll (helped by a nearby team-mate) before this player can act at all."},
+{name:"Regeneration", cat:"Traits", kind:"Passive", desc:"Gives a second chance to shrug off a serious casualty result on the injury table."},
+{name:"Right Stuff", cat:"Traits", kind:"Passive", desc:"Marks a player small and light enough to be thrown by a team-mate."},
+{name:"Secret Weapon", cat:"Traits", kind:"Passive", desc:"Marks a dangerous illegal weapon-user who is always sent off after using their action, regardless of outcome."},
+{name:"Stab", cat:"Traits", kind:"Active", desc:"Lets this player make a stabbing attack instead of a normal block, skipping the usual armour roll."},
+{name:"Stunty", cat:"Traits", kind:"Passive", desc:"Marks a small player who's easier to knock down but harder for others to catch mid-throw."},
+{name:"Swoop", cat:"Traits", kind:"Passive", desc:"Lets a flying player land safely and normally when thrown or otherwise put in the air."},
+{name:"Take Root", cat:"Traits", kind:"Passive", desc:"Risks rooting this player to the spot at the end of a move, unable to act further that turn."},
+{name:"Throw Team-mate", cat:"Traits", kind:"Passive", desc:"Marks a player strong and reliable enough to hurl a Right-Stuff team-mate down the field."},
+{name:"Timmm-ber!", cat:"Traits", kind:"Passive", desc:"Lets team-mates help a very tall player who's fallen back onto their feet more easily."},
+{name:"Titchy", cat:"Traits", kind:"Passive", desc:"Marks a tiny player who's extra hard to hit with a block but easy to push around."},
+{name:"Trickster", cat:"Traits", kind:"Active", desc:"Lets this player attempt a sly, rules-bending special action unique to their position."},
+{name:"Unchannelled Fury", cat:"Traits", kind:"Passive", desc:"Requires a roll before this player will actually go along with a team-mate's block assist."},
+{name:"Unsteady", cat:"Traits", kind:"Passive", desc:"Makes this player noticeably easier to push back or knock down than normal."}
+];
+
+const GUIDES = [
+{
+  title:"Building a Cage",
+  goal:"Wall the ball carrier off from every direction so nothing can reach them without a dodge or a Blitz through your line.",
+  tips:[
+    "<b>Four-corner shell:</b> put a player on each diagonal square around the ball carrier (not orthogonally adjacent) — that way each guard covers two approach lanes at once.",
+    "<b>Move the carrier last</b> in your activation order so the cage closes around them rather than you having to fill gaps after they've already moved.",
+    "<b>Keep it 1 square off the sideline</b> minimum. A cage built on the touchline hands the opponent free surf opportunities on any pushback.",
+    "<b>Guard players make cages nasty to crack</b> — stack Guard on your corner players so they keep assisting even when outnumbered.",
+    "<b>Don't overextend the corners.</b> A cage with gaps big enough for a 1-square dodge isn't a cage, it's a suggestion."
+  ]
+},
+{
+  title:"Breaking a Cage",
+  goal:"Force a dodge, a Blitz lane, or a numbers advantage on one corner rather than trying to smash the whole box at once.",
+  tips:[
+    "<b>Pick one corner, not all four.</b> Concentrate Blitz and assists on the weakest guard — usually the one with the worst Strength or no Guard skill.",
+    "<b>Use Multiple Block or Frenzy players</b> to clear two cage corners in a single action if you have them.",
+    "<b>Diving Tackle and Shadowing</b> punish a cage that tries to peel off and run — tag the likely dodge lane before you commit the rest of your team.",
+    "<b>Watch for chain-push setups near the sideline.</b> If you can push a corner guard so the ball carrier is the next link, you can surf the carrier out with a single well-aimed block.",
+    "<b>If you can't break it this turn, contain it.</b> Mark every open square around the cage so it can't advance without dodging away from you first."
+  ]
+},
+{
+  title:"Surfing (Crowd Push)",
+  goal:"Push a ball carrier or key opponent off the pitch and straight into an injury roll — no armour roll needed.",
+  tips:[
+    "<b>Push direction matters more than block result.</b> Line up your block so the only push-back squares available are off the pitch — sideline and corner squares are prime real estate.",
+    "<b>Chain pushes let you surf indirectly.</b> Push a player who's standing in front of your real target, and you can shove your actual target off the pitch as the secondary push, even without blocking them directly.",
+    "<b>Frenzy is a surfing machine</b> near the sideline — it forces a follow-up and, if needed, a second block on anyone still standing after the first push.",
+    "<b>Watch for Side Step, Stand Firm, and Sidestep-style skills</b> on the target — they let the defender choose their own push square or refuse the push entirely, killing the surf.",
+    "<b>No armour roll happens on a crowd push</b> — it goes straight to an injury roll by the crowd, and your player earns no casualty SPP for it, so don't rely on it for star player progression."
+  ]
+},
+{
+  title:"Screening",
+  goal:"Slow the opponent's advance by forcing them to dodge through a loose wall of markers, buying time rather than trying to hold ground outright.",
+  tips:[
+    "<b>Stagger, don't stack.</b> A zig-zag line of players each marking one lane is harder to bypass in one move than a straight row that can be dodged past in a single line.",
+    "<b>Leave no two-square gaps.</b> If an opponent can walk between two screeners without entering a tackle zone, the screen isn't doing its job.",
+    "<b>Use your slowest, most expendable players to screen</b> and save your ball-handlers and Blitzers for the actual push forward.",
+    "<b>A screen buys time, it doesn't stop a good dodge roll.</b> Expect AG4+ players with Dodge to get through eventually — plan your second line accordingly."
+  ]
+},
+{
+  title:"Kickoff Setup & Defense",
+  goal:"Give the receiving team the least useful ball-landing options while keeping your own players safe from an opening Blitz.",
+  tips:[
+    "<b>Keep players out of the wide zones</b> if you're worried about a fast opposing team getting a favorable kick-off deviation and a clean sprint upfield.",
+    "<b>Don't put your best player in easy Blitz range</b> of the opponent's fastest, hardest hitter on the LOS — the kicking team activates second, so the receiving team's Blitz comes first.",
+    "<b>Spread your line of scrimmage</b> so a single Kick-off Event (like a Blitz or a Riot) can't wreck more than one or two of your players at once.",
+    "<b>Deep safeties matter</b> against teams that can threaten a fast break — one or two players positioned to intercept a burst up the sideline is often worth more than an extra body in the cage."
+  ]
+},
+{
+  title:"One-Turn Touchdown Threats",
+  goal:"Recognize (and either prevent or set up) a scoring play that needs only a single turn to complete.",
+  tips:[
+    "<b>The classic shape</b> is a fast, high-Movement player positioned so a hand-off or short pass plus a sprint covers the whole distance to the end zone in one activation.",
+    "<b>To defend it, deny the hand-off lane</b> — mark the receiver so the passer can't safely hand off, and keep a spare body able to reach the end zone corridor.",
+    "<b>Watch your own end zone corners</b> on kick-off, especially against Skaven, Elves, and other high-MA teams — a single unmarked gutter runner near the sideline is often all it takes.",
+    "<b>To set one up yourself,</b> count squares carefully: Movement plus a completed pass or hand-off needs to reach the end zone with margin for a Rush or two, and ideally a re-roll in your pocket."
+  ]
+},
+{
+  title:"Loose Ball Recovery",
+  goal:"Get to a bouncing or thrown-in ball safely, without needlessly risking a turnover on the pickup.",
+  tips:[
+    "<b>Send more than one player toward a loose ball</b> when you can — if the first dodge or pickup fails, a second player nearby can still recover it.",
+    "<b>Sure Hands and Big Hand reduce pickup risk</b> in bad weather or when marked; prioritize those skilled players for the recovery if you have a choice.",
+    "<b>Don't recover with your only ball-handler in the open.</b> If picking up leaves that player exposed to an easy Blitz, consider picking up and immediately handing off instead.",
+    "<b>Remember Bounce direction is random</b> — plan for the ball scattering away from your intended recoverer, not just toward them."
+  ]
+},
+{
+  title:"Fouling Safely",
+  goal:"Take a shot at removing an opposing player from the game without losing your fouler to an ejection.",
+  tips:[
+    "<b>Only foul with no other players nearby watching</b> when you can — an unassisted foul plus Lone Fouler-type skills lowers your risk noticeably.",
+    "<b>Dirty Player and similar skills stack the injury roll,</b> making the foul worth the send-off risk against a genuinely important target.",
+    "<b>A natural double on the Armour roll always risks a send-off,</b> regardless of your skills, unless you have a specific skill that protects you — know the odds before you commit a key player.",
+    "<b>Time fouls for when losing the fouler doesn't hurt</b> — late in a half, or when that player has already done their job for the drive."
+  ]
+},
+{
+  title:"Using Guard Effectively",
+  goal:"Turn numbers-disadvantage situations into even or favorable ones by keeping assists flowing even when you're technically outnumbered.",
+  tips:[
+    "<b>Guard players still assist even against extra markers</b> that would normally cancel a standard assist — that's the whole point of the skill.",
+    "<b>Put Guard on your linemen, not just your stars.</b> A team with 3-4 Guard linemen can dominate the line of scrimmage even without big Strength numbers.",
+    "<b>Stack Guard around cage corners and screens alike</b> — it makes both structures far more expensive for the opponent to break.",
+    "<b>Watch for opposing Guard too</b> — don't assume a numbers advantage on a block until you've actually counted who's providing a real assist."
+  ]
+},
+{
+  title:"Playing Around Frenzy",
+  goal:"Neutralize an opponent's Frenzy skill instead of letting it turn your own cage or screen against you.",
+  tips:[
+    "<b>Never leave a Frenzy player's likely target next to the sideline</b> if you can help it — a single push can end in a surf, then a second forced block on the follow-up.",
+    "<b>Keep your cage corners off the touchline</b> so even a Frenzy-forced follow-up doesn't put your ball carrier at risk of a chain push into the crowd.",
+    "<b>Bait the Frenzy player into a bad matchup</b> — a Frenzy attacker forced into a second block against a Stand Firm or Wrestle defender often gets much less than they bargained for.",
+    "<b>Mark Frenzy players directly when possible</b> so they can't freely choose their angle of attack on your cage."
+  ]
+}
+];
+
+const SCENARIOS = [
+{
+  situation:"Your ball carrier is caged in the middle of the pitch, one turn from scoring. The opponent has one weak lineman (no Guard, ST2) on one corner and three well-guarded players on the others.",
+  options:[
+    "Blitz the weak corner with your best hitter and an assist, ignoring the other three corners",
+    "Spread your remaining actions evenly across all four corners",
+    "Foul the weakest corner player instead of blocking him"
+  ],
+  correct:0,
+  explanation:"<b>Concentrate on the weak link.</b> Cages fall at their weakest corner, not evenly across all four. Piling your best block and an assist onto the ST2 non-Guard lineman gives you the best odds of opening a lane, while spreading effort thin rarely breaks any single corner."
+},
+{
+  situation:"You have a Frenzy-skilled Blitzer and the opponent's ball carrier is standing two squares from the sideline, marked by one of your other players.",
+  options:[
+    "Blitz with the Frenzy player, angling the push toward the sideline",
+    "Blitz with a non-Frenzy player instead to avoid a forced second block",
+    "Don't blitz at all this turn"
+  ],
+  correct:0,
+  explanation:"<b>Frenzy is exactly the tool for this.</b> Near a sideline, the forced follow-up and potential second block make Frenzy players excellent surfers — a good push angle can end the ball carrier's day in the crowd. Just be careful your Frenzy player doesn't over-reach into a failed Rush afterward."
+},
+{
+  situation:"Your opponent has built a tight cage right on the sideline, one square from the touchline.",
+  options:[
+    "Look for a chain-push opportunity through one of the corner guards to surf the ball carrier",
+    "Only attempt to intercept the ball carrier's future pass",
+    "Ignore the cage and focus on your own offense entirely"
+  ],
+  correct:0,
+  explanation:"<b>Sideline cages are surf opportunities waiting to happen.</b> If you can block a corner guard so the only push-back square left in the chain shoves the ball carrier off the pitch, you get a crowd push and an instant injury roll — a much better outcome than a normal knockdown attempt."
+},
+{
+  situation:"You're setting up defense against a fast Skaven team with several MA9 Gutter Runners, and the receiving team looks poised for a possible one-turn score.",
+  options:[
+    "Leave your defensive line thin on the wide sidelines to stack the middle",
+    "Make sure your kick-off setup denies clean sideline running lanes and keeps a spare defender near your end zone",
+    "Put all of your best players right on the line of scrimmage"
+  ],
+  correct:1,
+  explanation:"<b>Fast teams live on open sideline lanes.</b> Against high-Movement threats, it's worth sacrificing some central density to make sure nobody can sprint untouched down the touchline, and to keep at least one player who can reach your end zone if things go wrong."
+},
+{
+  situation:"You want to foul a stunned opposing player who's already down, but three of the opponent's players are standing adjacent to the scene.",
+  options:[
+    "Foul anyway — more assists just mean a better armour roll for you",
+    "Skip the foul, or clear the witnesses with a Blitz first, since it's an unassisted-only bonus type skill situation and heavy witness presence raises send-off risk",
+    "Foul with your least important player no matter what"
+  ],
+  correct:1,
+  explanation:"<b>Fouls are safest when unassisted or lightly assisted</b> — a lineup of opposing players nearby doesn't help your armour roll, and being surrounded by witnesses just adds to your risk profile of getting caught. Either clear space first or wait for a cleaner opportunity."
+},
+{
+  situation:"The ball has bounced loose near the sideline after a failed pass, with two of your players and one opponent able to reach it.",
+  options:[
+    "Send only your best ball-handler after it, keeping everyone else back",
+    "Send two players toward it, so a failed pickup still leaves a second chance",
+    "Ignore the ball for a turn and reposition your cage instead"
+  ],
+  correct:1,
+  explanation:"<b>Redundancy wins loose-ball scrambles.</b> A single failed dodge or pickup roll causes a turnover, but if a second player is also in range, you get a fallback attempt at recovering it before handing the opponent an easy possession."
+},
+{
+  situation:"You're building a cage around your ball carrier and have four spare players to use.",
+  options:[
+    "Put all four players directly orthogonally adjacent (north, south, east, west) to the carrier",
+    "Put the four players on the diagonal corners around the carrier",
+    "Put all four players in a single line in front of the carrier"
+  ],
+  correct:1,
+  explanation:"<b>Diagonal corners are the standard cage shape</b> because each corner player covers two adjacent approach lanes at once, and none of them are directly footballed by a simple straight-line block. An orthogonal wall or a single line leaves easy gaps for a dodge-in."
+},
+{
+  situation:"Your opponent's cage corner has the Guard skill, and you only have enough players to bring a 2-on-1 assist situation to that corner.",
+  options:[
+    "Expect the assist numbers to cancel out — Guard players keep assisting even when you bring extra numbers",
+    "Assume your 2-on-1 guarantees a clean two-die block in your favor",
+    "Switch your target to a different corner without checking for Guard there too"
+  ],
+  correct:0,
+  explanation:"<b>Guard defeats simple numbers advantages.</b> A Guard player keeps assisting a teammate's block or defense even when normally outnumbered, so don't assume extra bodies alone will flip the dice in your favor — check every corner for Guard before committing."
+}
+];
+
+let guideIdx = 0;
+let tacticsSub = "guide";
+let scenarioPool = [];
+let scenarioIdx = 0;
+
+const CATS = ["All", ...Array.from(new Set(DATA.map(d=>d.cat)))];
+let currentCat = "All";
+let mode = "flash";
+let flashIdx = 0;
+let quizPool = [];
+let quizIdx = 0;
+let score = 0, answered = 0;
+
+const catSelect = document.getElementById('categorySelect');
+CATS.forEach(c=>{
+  const opt = document.createElement('option');
+  opt.value = c; opt.textContent = c === "All" ? "All Categories" : c;
+  catSelect.appendChild(opt);
+});
+catSelect.addEventListener('change', ()=>{
+  currentCat = catSelect.value;
+  flashIdx = 0;
+  buildQuizPool();
+  quizIdx = 0; score = 0; answered = 0;
+  render();
+});
+
+document.querySelectorAll('.mode-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    mode = btn.dataset.mode;
+    document.getElementById('flashArea').style.display = mode==='flash' ? 'block':'none';
+    document.getElementById('quizArea').style.display = mode==='quiz' ? 'block':'none';
+    document.getElementById('tacticsArea').style.display = mode==='tactics' ? 'block':'none';
+    document.getElementById('categorySelect').style.display = mode==='tactics' ? 'none':'block';
+    if(mode==='quiz'){ buildQuizPool(); quizIdx=0; score=0; answered=0; }
+    if(mode==='tactics'){ scenarioPool = shuffle(SCENARIOS.slice()); scenarioIdx = 0; }
+    render();
+  });
+});
+
+function currentPool(){
+  return currentCat==="All" ? DATA : DATA.filter(d=>d.cat===currentCat);
+}
+
+function buildQuizPool(){
+  quizPool = shuffle(currentPool().slice());
+}
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+
+function renderFlash(){
+  const pool = currentPool();
+  if(flashIdx >= pool.length) flashIdx = 0;
+  const item = pool[flashIdx];
+  const area = document.getElementById('flashArea');
+  area.innerHTML = `
+    <div class="stat-row"><span>Card ${flashIdx+1} / ${pool.length}</span><span>${currentCat}</span></div>
+    <div class="card" id="flipCard" data-flipped="0">
+      <span class="tag">${item.cat}</span>
+      <span class="kind">${item.kind}</span>
+      <div id="cardFront">
+        <h2>${item.name}</h2>
+        <div class="hint">Tap card to reveal what it does</div>
+      </div>
+    </div>
+    <div class="flip-controls">
+      <button class="btn-prev" id="prevBtn">◀ Prev</button>
+      <button class="btn-next" id="nextBtn">Next ▶</button>
+    </div>
+  `;
+  document.getElementById('flipCard').addEventListener('click', function(){
+    const flipped = this.dataset.flipped === "1";
+    if(!flipped){
+      this.dataset.flipped = "1";
+      document.getElementById('cardFront').innerHTML = `<h2>${item.name}</h2><p>${item.desc}</p><div class="hint">Tap to flip back</div>`;
+    } else {
+      this.dataset.flipped = "0";
+      document.getElementById('cardFront').innerHTML = `<h2>${item.name}</h2><div class="hint">Tap card to reveal what it does</div>`;
+    }
+  });
+  document.getElementById('prevBtn').addEventListener('click', ()=>{
+    flashIdx = (flashIdx - 1 + pool.length) % pool.length;
+    renderFlash();
+  });
+  document.getElementById('nextBtn').addEventListener('click', ()=>{
+    flashIdx = (flashIdx + 1) % pool.length;
+    renderFlash();
+  });
+}
+
+function renderQuiz(){
+  const area = document.getElementById('quizArea');
+  if(quizPool.length < 4){
+    area.innerHTML = `<div class="q-card"><div class="q-prompt">Pick a category with at least 4 skills to quiz on!</div></div>`;
+    return;
+  }
+  if(quizIdx >= quizPool.length){
+    buildQuizPool();
+    quizIdx = 0;
+  }
+  const correctItem = quizPool[quizIdx];
+  // build 3 distractors from same pool (prefer same category flavor already guaranteed by currentPool)
+  const distractorSource = currentPool().filter(d=>d.name !== correctItem.name);
+  const distractors = shuffle(distractorSource.slice()).slice(0,3);
+  const options = shuffle([correctItem, ...distractors]);
+
+  area.innerHTML = `
+    <div class="stat-row"><span>Question ${quizIdx+1}</span><span>Score: ${score}/${answered}</span></div>
+    <div class="q-card">
+      <div class="q-prompt"><strong>${correctItem.cat} skill</strong> — which skill does this?<br><br>"${correctItem.desc}"</div>
+      <div id="choicesWrap"></div>
+      <button class="next-q" id="nextQBtn">Next Question ▶</button>
+    </div>
+  `;
+  const wrap = document.getElementById('choicesWrap');
+  options.forEach(opt=>{
+    const b = document.createElement('button');
+    b.className = 'choice';
+    b.textContent = opt.name;
+    b.addEventListener('click', ()=>{
+      const buttons = wrap.querySelectorAll('.choice');
+      buttons.forEach(btn=>btn.disabled = true);
+      answered++;
+      if(opt.name === correctItem.name){
+        b.classList.add('correct');
+        score++;
+      } else {
+        b.classList.add('wrong');
+        buttons.forEach(btn=>{ if(btn.textContent === correctItem.name) btn.classList.add('correct'); });
+      }
+      document.getElementById('nextQBtn').classList.add('show');
+      updateScoreDisplay();
+    });
+    wrap.appendChild(b);
+  });
+  document.getElementById('nextQBtn').addEventListener('click', ()=>{
+    quizIdx++;
+    renderQuiz();
+  });
+}
+
+function updateScoreDisplay(){
+  const row = document.querySelector('#quizArea .stat-row span:last-child');
+  if(row) row.textContent = `Score: ${score}/${answered}`;
+}
+
+function renderTactics(){
+  const area = document.getElementById('tacticsArea');
+  area.innerHTML = `
+    <div class="sub-toggle">
+      <button id="subGuide" class="${tacticsSub==='guide'?'active':''}">Reference Guides</button>
+      <button id="subScenario" class="${tacticsSub==='scenario'?'active':''}">Scenario Challenge</button>
+    </div>
+    <div id="tacticsInner"></div>
+  `;
+  document.getElementById('subGuide').addEventListener('click', ()=>{ tacticsSub='guide'; renderTactics(); });
+  document.getElementById('subScenario').addEventListener('click', ()=>{ tacticsSub='scenario'; renderTactics(); });
+
+  if(tacticsSub === 'guide'){
+    renderGuideList();
+  } else {
+    renderScenario();
+  }
+}
+
+function renderGuideList(){
+  const inner = document.getElementById('tacticsInner');
+  const chips = GUIDES.map((g,i)=>`<button class="topic-chip ${i===guideIdx?'active':''}" data-i="${i}">${g.title}</button>`).join('');
+  const g = GUIDES[guideIdx];
+  inner.innerHTML = `
+    <div class="topic-list">${chips}</div>
+    <div class="guide-card">
+      <h3>${g.title}</h3>
+      <div class="goal">${g.goal}</div>
+      <ul>${g.tips.map(t=>`<li>${t}</li>`).join('')}</ul>
+    </div>
+  `;
+  inner.querySelectorAll('.topic-chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      guideIdx = parseInt(chip.dataset.i, 10);
+      renderGuideList();
+    });
+  });
+}
+
+function renderScenario(){
+  const inner = document.getElementById('tacticsInner');
+  if(scenarioIdx >= scenarioPool.length){
+    scenarioPool = shuffle(SCENARIOS.slice());
+    scenarioIdx = 0;
+  }
+  const s = scenarioPool[scenarioIdx];
+  inner.innerHTML = `
+    <div class="stat-row"><span>Scenario ${scenarioIdx+1} / ${scenarioPool.length}</span><span>Best Approach?</span></div>
+    <div class="q-card">
+      <span class="scenario-tag">On the pitch</span>
+      <div class="q-prompt">${s.situation}</div>
+      <div id="scenarioChoices"></div>
+      <div class="explain-box" id="explainBox"></div>
+      <button class="next-q" id="nextScenarioBtn">Next Scenario ▶</button>
+    </div>
+  `;
+  const wrap = document.getElementById('scenarioChoices');
+  s.options.forEach((optText, i)=>{
+    const b = document.createElement('button');
+    b.className = 'choice';
+    b.textContent = optText;
+    b.addEventListener('click', ()=>{
+      wrap.querySelectorAll('.choice').forEach(btn=>btn.disabled = true);
+      if(i === s.correct){
+        b.classList.add('correct');
+      } else {
+        b.classList.add('wrong');
+        wrap.querySelectorAll('.choice')[s.correct].classList.add('correct');
+      }
+      const box = document.getElementById('explainBox');
+      box.innerHTML = s.explanation;
+      box.classList.add('show');
+      document.getElementById('nextScenarioBtn').classList.add('show');
+    });
+    wrap.appendChild(b);
+  });
+  document.getElementById('nextScenarioBtn').addEventListener('click', ()=>{
+    scenarioIdx++;
+    renderScenario();
+  });
+}
+
+function render(){
+  if(mode==='flash') renderFlash();
+  else if(mode==='quiz') renderQuiz();
+  else renderTactics();
+}
+
+buildQuizPool();
+render();
+</script>
+</body>
+</html>
