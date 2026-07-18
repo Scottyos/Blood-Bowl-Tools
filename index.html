@@ -19,186 +19,125 @@
 }
 
 body{
-
     font-family:Roboto,sans-serif;
-
     background:
         radial-gradient(circle at top,#24354e 0%,#111722 45%,#0a0f16 100%);
-
     color:#EEE;
-
     min-height:100vh;
-
 }
 
 header{
-
     text-align:center;
-
     padding:60px 20px 40px;
-
 }
 
 header h1{
-
     font-family:'Cinzel',serif;
-
     font-size:3rem;
-
     color:#d7b14d;
-
     letter-spacing:3px;
-
-    text-shadow:
-        0 0 8px rgba(0,0,0,.8);
-
+    text-shadow:0 0 8px rgba(0,0,0,.8);
 }
 
 header h2{
-
     margin-top:12px;
-
     font-weight:300;
-
     color:#bcc6d3;
-
 }
 
 .divider{
-
     width:140px;
-
     height:3px;
-
     margin:25px auto;
-
     background:#991b1b;
-
     border-radius:3px;
-
 }
 
 .container{
-
     max-width:1100px;
-
     margin:auto;
-
     padding:30px;
-
 }
 
 .grid{
-
     display:grid;
-
     grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-
     gap:28px;
-
 }
 
 .card{
-
     display:flex;
-
     flex-direction:column;
-
     justify-content:space-between;
-
     text-decoration:none;
-
     color:white;
-
     background:#1a2432;
-
     border:2px solid #425366;
-
     border-radius:16px;
-
     padding:28px;
-
     min-height:240px;
-
     transition:.25s;
-
-    box-shadow:
-        0 12px 25px rgba(0,0,0,.35);
-
+    box-shadow:0 12px 25px rgba(0,0,0,.35);
 }
 
 .card:hover{
-
     transform:translateY(-8px);
-
     border-color:#b51c1c;
-
     box-shadow:
         0 18px 35px rgba(0,0,0,.55),
         0 0 18px rgba(181,28,28,.4);
+}
 
+.coming-soon{
+    opacity:.75;
+    cursor:default;
+}
+
+.coming-soon:hover{
+    transform:none;
+    border-color:#425366;
+    box-shadow:0 12px 25px rgba(0,0,0,.35);
+}
+
+.coming-soon .launch{
+    color:#999;
 }
 
 .icon{
-
     font-size:3rem;
-
 }
 
 .card h3{
-
     margin-top:18px;
-
     font-family:'Cinzel',serif;
-
     color:#d8b95a;
-
     font-size:1.4rem;
-
 }
 
 .card p{
-
     margin-top:15px;
-
     line-height:1.6;
-
     color:#c3ccd8;
-
     flex-grow:1;
-
 }
 
 .launch{
-
     margin-top:25px;
-
     color:#d8b95a;
-
     font-weight:bold;
-
     letter-spacing:1px;
-
 }
 
 footer{
-
     margin-top:70px;
-
     padding:40px;
-
     text-align:center;
-
     color:#9ea8b5;
-
     font-style:italic;
-
 }
 
 footer span{
-
     color:#d8b95a;
-
 }
 
 </style>
@@ -255,6 +194,23 @@ Launch Tool →
 
 </a>
 
+<a class="card" href="https://scottyos.github.io/Blood-Bowl-Tools/blood-bowl-odds-caller.html">
+
+<div class="icon">📊</div>
+
+<h3>Odds Caller</h3>
+
+<p>
+Practice evaluating the probability of common Blood Bowl actions.
+Build better instincts for when to push your luck and when to play it safe.
+</p>
+
+<div class="launch">
+Launch Tool →
+</div>
+
+</a>
+
 <a class="card" href="https://scottyos.github.io/Blood-Bowl-Tools/bloodbowl-turn-clock.html">
 
 <div class="icon">⏱️</div>
@@ -272,22 +228,22 @@ Launch Tool →
 
 </a>
 
-<a class="card" href="https://scottyos.github.io/Blood-Bowl-Tools/chain-push-trainer.html">
+<div class="card coming-soon">
 
-<div class="icon">🏈</div>
+<div class="icon">↔️</div>
 
 <h3>Chain Push Trainer</h3>
 
 <p>
 Master one of Blood Bowl's most powerful positioning mechanics.
-Practice chain pushes until you can spot them during live games.
+Learn crowd pushes, surfing setups, and advanced chain push sequences.
 </p>
 
 <div class="launch">
-Launch Tool →
+Coming Soon
 </div>
 
-</a>
+</div>
 
 </div>
 
