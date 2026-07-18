@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Odds Caller — Blood Bowl Block Dice Trainer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root{
+    --pitch:#151f1a;
+    --pitch-2:#1c2a22;
+    --chalk:#e9e3d2;
+    --chalk-dim:#a7ac9e;
+    --blood:#b6402f;
+    --blood-bright:#e05744;
+    --turf:#5c9a63;
+    --amber:#c99544;
+    --line:#3a4a3f;
+    --card-atk:#3a2323;
+    --card-def:#22303a;
+  }
+
+  *{box-sizing:border-box;}
+
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse at 50% -10%, #24352a 0%, transparent 60%),
+      repeating-linear-gradient(0deg, transparent, transparent 38px, rgba(233,227,210,0.025) 39px, transparent 40px),
+      var(--pitch);
+    color:var(--chalk);
+    font-family:'Oswald', sans-serif;
+    padding:20px 14px 60px;
+    min-height:100vh;
+  }
+
+  .wrap{max-width:760px; margin:0 auto;}
+
+  /* ---- Header ---- */
+  header{text-align:center; margin-bottom:22px; position:relative;}
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:.28em;
+    color:var(--amber);
+    text-transform:uppercase;
+  }
+  h1{
+    font-family:'Anton', sans-serif;
+    font-weight:400;
+    font-size:clamp(32px,7vw,48px);
+    letter-spacing:.02em;
+    margin:4px 0 6px;
+    color:var(--chalk);
+    text-shadow: 2px 2px 0 var(--blood);
+  }
+  .sub{color:var(--chalk-dim); font-size:14px; max-width:520px; margin:0 auto;}
+  .score{
+    position:absolute; top:0; right:0;
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    background:var(--pitch-2);
+    border:1px solid var(--line);
+    padding:6px 10px;
+    border-radius:4px;
+    color:var(--turf);
+  }
+  @media (max-width:520px){ .score{position:static; display:inline-block; margin-top:10px;} }
+
+  /* ---- Matchup cards ---- */
+  .matchup{
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
+    gap:10px;
+    align-items:stretch;
+    margin-bottom:14px;
+  }
+  .card{
+    border-radius:8px;
+    padding:14px 16px;
+    border:1px solid var(--line);
+    position:relative;
+    overflow:hidden;
+  }
+  .card.atk{background:linear-gradient(160deg, var(--card-atk), var(--pitch-2)); border-left:3px solid var(--blood-bright);}
+  .card.def{background:linear-gradient(160deg, var(--card-def), var(--pitch-2)); border-left:3px solid #4f7fa3;}
+  .card .role{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--chalk-dim);
+  }
+  .card .name{font-family:'Anton'; font-size:20px; letter-spacing:.01em; margin:2px 0 8px;}
+  .statline{display:flex; gap:14px; margin-bottom:8px; font-family:'JetBrains Mono',monospace;}
+  .statline div{font-size:12px; color:var(--chalk-dim);}
+  .statline b{display:block; font-size:18px; color:var(--chalk); font-family:'Anton';}
+  .skills{display:flex; flex-wrap:wrap; gap:6px;}
+  .skill-tag{
+    font-size:11px; padding:3px 8px; border-radius:20px;
+    border:1px solid var(--line); color:var(--chalk-dim); font-family:'JetBrains Mono', monospace;
+  }
+  .skill-tag.active{border-color:var(--amber); color:var(--amber);}
+  .vs{
+    align-self:center; font-family:'Anton'; font-size:22px; color:var(--blood-bright);
+    writing-mode:horizontal-tb;
+  }
+
+  /* ---- Assist row ---- */
+  .assists{
+    display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;
+  }
+  .assist-box{
+    background:var(--pitch-2); border:1px solid var(--line); border-radius:8px;
+    padding:10px 14px; display:flex; align-items:center; justify-content:space-between;
+  }
+  .assist-box .lbl{font-size:12px; color:var(--chalk-dim); font-family:'JetBrains Mono',monospace;}
+  .assist-box .ctrl{display:flex; align-items:center; gap:8px;}
+  .assist-box button{
+    width:26px; height:26px; border-radius:4px; border:1px solid var(--line);
+    background:var(--pitch); color:var(--chalk); font-size:15px; cursor:pointer; line-height:1;
+  }
+  .assist-box button:hover{border-color:var(--amber); color:var(--amber);}
+  .assist-box .val{font-family:'Anton'; font-size:18px; min-width:16px; text-align:center;}
+
+  /* ---- Dice ruling banner ---- */
+  .ruling{
+    background:var(--pitch-2);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:14px 16px;
+    margin-bottom:14px;
+  }
+  .ruling .rtitle{
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.15em;
+    color:var(--chalk-dim); text-transform:uppercase; margin-bottom:6px;
+  }
+  .ruling .rmain{font-family:'Anton'; font-size:19px; margin-bottom:4px;}
+  .ruling .rmain .n{color:var(--amber);}
+  .ruling .rnote{font-size:13px; color:var(--chalk-dim); line-height:1.5;}
+  .faces-row{display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;}
+  .face-chip{
+    font-family:'JetBrains Mono',monospace; font-size:11px; padding:4px 9px; border-radius:5px;
+    border:1px solid var(--line); color:var(--chalk-dim);
+  }
+  .face-chip.good{border-color:var(--turf); color:var(--turf);}
+  .face-chip.bad{border-color:var(--blood-bright); color:var(--blood-bright);}
+
+  /* ---- Goal banner ---- */
+  .goal{
+    background:linear-gradient(120deg, rgba(201,149,68,.14), transparent);
+    border:1px solid var(--amber);
+    border-radius:8px;
+    padding:14px 16px;
+    margin-bottom:16px;
+  }
+  .goal .gtitle{font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.15em; color:var(--amber); text-transform:uppercase;}
+  .goal .gmain{font-family:'Anton'; font-size:21px; margin:4px 0 6px;}
+  .goal .gnote{font-size:13px; color:var(--chalk-dim); line-height:1.5;}
+  .goal .gtarget{
+    font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--chalk); margin-bottom:8px;
+  }
+  .goal .gtarget b{color:var(--turf);}
+
+  /* ---- Options ---- */
+  .prompt{font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.1em; color:var(--chalk-dim); text-transform:uppercase; margin:18px 0 8px;}
+  .options{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  @media (max-width:480px){ .options{grid-template-columns:1fr;} }
+  .opt{
+    background:var(--pitch-2); border:2px solid var(--line); border-radius:8px;
+    padding:16px; text-align:center; cursor:pointer; font-family:'Anton'; font-size:24px;
+    letter-spacing:.02em; transition:transform .1s, border-color .15s, background .15s, color .15s;
+    color:var(--chalk); -webkit-text-fill-color:var(--chalk);
+  }
+  .opt:hover{border-color:var(--amber); color:var(--amber); -webkit-text-fill-color:var(--amber); transform:translateY(-1px);}
+  .opt:disabled{cursor:default;}
+  .opt.correct{border-color:var(--turf); background:rgba(92,154,99,.22); color:#8fd699; -webkit-text-fill-color:#8fd699;}
+  .opt.wrong{border-color:var(--blood-bright); background:rgba(182,64,47,.22); color:#ff8b7a; -webkit-text-fill-color:#ff8b7a; opacity:.85;}
+  .opt.dim{opacity:.4; color:var(--chalk-dim); -webkit-text-fill-color:var(--chalk-dim);}
+
+  /* ---- Reveal ---- */
+  .reveal{
+    margin-top:18px; background:var(--pitch-2); border:1px solid var(--line); border-radius:8px;
+    padding:16px 18px; display:none;
+  }
+  .reveal.show{display:block;}
+  .reveal .rtop{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:10px; flex-wrap:wrap; gap:6px;}
+  .reveal .verdict{font-family:'Anton'; font-size:20px;}
+  .reveal .verdict.right{color:var(--turf);}
+  .reveal .verdict.miss{color:var(--blood-bright);}
+  .reveal .truep{font-family:'JetBrains Mono',monospace; font-size:26px; color:var(--chalk);}
+  .breakdown{font-size:13px; color:var(--chalk-dim); line-height:1.7;}
+  .breakdown b{color:var(--chalk);}
+  .breakdown .step{
+    border-left:2px solid var(--line); padding-left:10px; margin:8px 0;
+  }
+  table.facetable{width:100%; border-collapse:collapse; margin:10px 0; font-family:'JetBrains Mono',monospace; font-size:12px;}
+  table.facetable th, table.facetable td{border-bottom:1px solid var(--line); padding:5px 6px; text-align:left;}
+  table.facetable th{color:var(--chalk-dim); font-weight:500;}
+  .tag-succ{color:var(--turf);} .tag-fail{color:var(--blood-bright);}
+
+  .controls{display:flex; gap:10px; margin-top:18px; justify-content:center; flex-wrap:wrap;}
+  .btn{
+    font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.08em; text-transform:uppercase;
+    background:transparent; border:1px solid var(--line); color:var(--chalk); -webkit-text-fill-color:var(--chalk); padding:10px 18px;
+    border-radius:6px; cursor:pointer;
+  }
+  .btn:hover{border-color:var(--amber); color:var(--amber); -webkit-text-fill-color:var(--amber);}
+  .btn.primary{border-color:var(--turf); color:var(--turf); -webkit-text-fill-color:var(--turf);}
+  .btn.primary:hover{background:rgba(92,154,99,.14);}
+  .assist-box button{color:var(--chalk); -webkit-text-fill-color:var(--chalk);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="score" id="scoreBox">0 / 0</div>
+    <div class="eyebrow">Blood Bowl · Block Dice Trainer</div>
+    <h1>THE ODDS CALLER</h1>
+    <div class="sub">Read the matchup, spot what you're rolling for, then call the percentage range before the dice hit the pitch.</div>
+  </header>
+
+  <div class="matchup">
+    <div class="card atk">
+      <div class="role">Attacking Player</div>
+      <div class="name" id="atkName">—</div>
+      <div class="statline"><div>ST<b id="atkST">-</b></div><div>Eff. ST<b id="atkEffST">-</b></div></div>
+      <div class="skills" id="atkSkills"></div>
+    </div>
+    <div class="vs">VS</div>
+    <div class="card def">
+      <div class="role">Defending Player</div>
+      <div class="name" id="defName">—</div>
+      <div class="statline"><div>ST<b id="defST">-</b></div><div>Eff. ST<b id="defEffST">-</b></div></div>
+      <div class="skills" id="defSkills"></div>
+    </div>
+  </div>
+
+  <div class="assists">
+    <div class="assist-box"><span class="lbl">Offensive assists</span><span class="ctrl" id="offAssistVal"></span></div>
+    <div class="assist-box"><span class="lbl">Defensive assists</span><span class="ctrl" id="defAssistVal"></span></div>
+  </div>
+
+  <div class="ruling">
+    <div class="rtitle">Dice Ruling</div>
+    <div class="rmain" id="rulingMain">—</div>
+    <div class="rnote" id="rulingNote">—</div>
+    <div class="faces-row" id="faceRow"></div>
+  </div>
+
+  <div class="goal">
+    <div class="gtitle" id="goalTag">Target</div>
+    <div class="gmain" id="goalMain">—</div>
+    <div class="gtarget" id="goalTarget">—</div>
+    <div class="gnote" id="goalNote">—</div>
+  </div>
+
+  <div class="prompt">Call the odds — what's your chance of hitting this target?</div>
+  <div class="options" id="optionsRow"></div>
+
+  <div class="reveal" id="reveal">
+    <div class="rtop">
+      <div class="verdict" id="verdict">—</div>
+      <div class="truep" id="truep">—%</div>
+    </div>
+    <div class="breakdown" id="breakdownBody"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn primary" id="nextBtn">New Scenario</button>
+  </div>
+
+</div>
+
+<script>
+/* ======================= DATA ======================= */
+const FACES = ['AD','BD','PU','PU','DS','DD']; // standard block die
+const FACE_LABEL = {AD:'Attacker Down', BD:'Both Down', PU:'Push Back', DS:'Defender Stumbles', DD:'Defender Down'};
+
+const ATTACKERS = [
+  {name:'Human Blitzer', st:3, pool:['Block']},
+  {name:'Dwarf Blocker', st:3, pool:['Block','Tackle']},
+  {name:'Orc Black Orc', st:4, pool:[]},
+  {name:'Chaos Warrior', st:4, pool:[]},
+  {name:'Skaven Blitzer', st:3, pool:['Block']},
+  {name:'Norse Berserker', st:3, pool:['Block','Frenzy']},
+  {name:'Ogre', st:5, pool:['Mighty Blow','Juggernaut']},
+  {name:'Human Lineman', st:3, pool:[]},
+  {name:'Necromantic Wight', st:3, pool:['Block','Tackle']},
+];
+const DEFENDERS = [
+  {name:'Wood Elf Wardancer', st:3, pool:['Dodge','Block']},
+  {name:'Skaven Gutter Runner', st:2, pool:['Dodge']},
+  {name:'Dwarf Longbeard', st:3, pool:['Block']},
+  {name:'Human Catcher', st:2, pool:['Dodge']},
+  {name:'Orc Lineman', st:3, pool:[]},
+  {name:'Chaos Dwarf Blocker', st:3, pool:['Block']},
+  {name:'Troll', st:5, pool:['Stand Firm']},
+  {name:'High Elf Blitzer', st:3, pool:['Dodge']},
+  {name:'Human Lineman', st:3, pool:[]},
+];
+const ATK_EXTRA_SKILLS = ['Block','Wrestle','Mighty Blow','Juggernaut','Tackle','Frenzy'];
+const DEF_EXTRA_SKILLS = ['Dodge','Block','Wrestle','Fend','Stand Firm'];
+
+/* ======================= STATE ======================= */
+let state = {};
+let score = {right:0, total:0};
+
+/* ======================= HELPERS ======================= */
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function has(list, s){ return list.includes(s); }
+
+function buildSkillSet(basePool, extraPool, extraChance){
+  let set = new Set(basePool);
+  extraPool.forEach(s=>{ if(!set.has(s) && Math.random()<extraChance) set.add(s); });
+  return Array.from(set);
+}
+
+/* Resolve a single face into a normalized outcome, given both skill sets. */
+function resolveFace(face, atk, def){
+  if(face==='AD') return {type:'AD', aFalls:true, dFalls:false};
+  if(face==='DD') return {type:'DD', aFalls:false, dFalls:true};
+  if(face==='PU') return {type:'PU', aFalls:false, dFalls:false};
+  if(face==='DS'){
+    if(has(def.skills,'Dodge') && !has(atk.skills,'Tackle')){
+      return {type:'PU', aFalls:false, dFalls:false, negated:true}; // Dodge downgrades stumble to a push
+    }
+    return {type:'DS', aFalls:false, dFalls:true};
+  }
+  if(face==='BD'){
+    let aFalls = !has(atk.skills,'Block');
+    let dFalls = !has(def.skills,'Block');
+    if(aFalls && has(atk.skills,'Juggernaut')){
+      // Juggernaut lets the attacker turn a Both Down that would drop them into a Push instead
+      return {type:'PU', aFalls:false, dFalls:false, converted:true};
+    }
+    return {type:'BD', aFalls, dFalls};
+  }
+}
+
+function desirability(o){
+  if(o.type==='AD') return 0;
+  if(o.type==='DD' || o.type==='DS') return 6;
+  if(o.type==='PU') return 3;
+  if(o.type==='BD'){
+    if(!o.aFalls && o.dFalls) return 5.5;
+    if(!o.aFalls && !o.dFalls) return 3.2;
+    if(o.aFalls && o.dFalls) return 1.5;
+    return 0.5;
+  }
+}
+
+function successNoTurnover(o){ return !(o.type==='AD' || (o.type==='BD' && o.aFalls)); }
+function successKnockdown(o){ return o.type==='DD' || o.type==='DS' || (o.type==='BD' && o.dFalls); }
+
+function diceInfo(atkEff, defEff){
+  if(atkEff >= defEff*2) return {n:3, chooser:'attacker'};
+  if(atkEff > defEff) return {n:2, chooser:'attacker'};
+  if(atkEff === defEff) return {n:1, chooser:null};
+  if(defEff >= atkEff*2) return {n:3, chooser:'defender'};
+  return {n:2, chooser:'defender'};
+}
+
+/* Enumerate all dice combinations, apply chooser logic, return {successCount, total, chosenPerCombo(optional)} */
+function computeProbability(n, chooser, atk, def, successFn){
+  const total = Math.pow(6, n);
+  let successCount = 0;
+  function combos(depth, current){
+    if(depth===n){
+      let resolved = current.map(fi=>resolveFace(FACES[fi], atk, def));
+      let desirs = resolved.map(desirability);
+      let bestIdx = 0;
+      if(chooser==='attacker'){
+        for(let i=1;i<desirs.length;i++) if(desirs[i]>desirs[bestIdx]) bestIdx=i;
+      } else if(chooser==='defender'){
+        for(let i=1;i<desirs.length;i++) if(desirs[i]<desirs[bestIdx]) bestIdx=i;
+      }
+      let chosen = resolved[bestIdx];
+      if(successFn(chosen)) successCount++;
+      return;
+    }
+    for(let f=0; f<6; f++){ combos(depth+1, current.concat([f])); }
+  }
+  combos(0, []);
+  return {successCount, total, pct: (successCount/total)*100};
+}
+
+/* Build 4 percentage-range options, one of which contains truePct. Returns {bands:[[lo,hi]...], correctIndex} */
+function generateOptions(truePct){
+  const p = Math.max(0, Math.min(100, Math.round(truePct)));
+  const width = 12, gap = 5;
+  let correctLo = Math.max(0, Math.min(100-width, p - Math.floor(width/2)));
+  let correctHi = correctLo + width;
+  if(p > correctHi){ correctHi = p; correctLo = correctHi-width; }
+  if(p < correctLo){ correctLo = p; correctHi = correctLo+width; }
+
+  let segments = [];
+  if(correctLo - gap > 0) segments.push([0, correctLo-gap]);
+  if(correctHi + gap < 100) segments.push([correctHi+gap, 100]);
+
+  let slots = [];
+  segments.forEach(([s,e])=>{
+    let cursor = s;
+    while(cursor+width <= e){ slots.push([cursor, cursor+width]); cursor += width+gap; }
+  });
+  for(let i=slots.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [slots[i],slots[j]]=[slots[j],slots[i]]; }
+  let others = slots.slice(0,3);
+  while(others.length<3){
+    let lo = Math.floor(Math.random()*88);
+    others.push([lo, lo+width]);
+  }
+  let allBands = [[correctLo,correctHi], ...others];
+  let indices = [0,1,2,3];
+  for(let i=indices.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [indices[i],indices[j]]=[indices[j],indices[i]]; }
+  let finalBands = indices.map(i=>allBands[i]);
+  let correctIndex = indices.indexOf(0);
+  return {bands:finalBands, correctIndex};
+}
+
+/* ======================= SCENARIO GENERATION ======================= */
+function newScenario(){
+  const atkBase = pick(ATTACKERS);
+  const defBase = pick(DEFENDERS);
+  const atk = {name:atkBase.name, st:atkBase.st, skills: buildSkillSet(atkBase.pool, ATK_EXTRA_SKILLS, 0.12)};
+  const def = {name:defBase.name, st:defBase.st, skills: buildSkillSet(defBase.pool, DEF_EXTRA_SKILLS, 0.12)};
+  const offAssists = Math.floor(Math.random()*3); // 0-2
+  const defAssists = Math.floor(Math.random()*3); // 0-2
+  const atkEff = atk.st + offAssists;
+  const defEff = def.st + defAssists;
+  const dice = diceInfo(atkEff, defEff);
+  const goal = Math.random()<0.5 ? 'noturnover' : 'knockdown';
+  const successFn = goal==='noturnover' ? successNoTurnover : successKnockdown;
+
+  let result;
+  if(dice.n===1){
+    // single die: no choosing, just enumerate the 6 faces directly
+    result = computeProbability(1, null, atk, def, successFn);
+  } else {
+    result = computeProbability(dice.n, dice.chooser, atk, def, successFn);
+  }
+
+  const opts = generateOptions(result.pct);
+
+  state = {atk, def, offAssists, defAssists, atkEff, defEff, dice, goal, successFn, result, opts, answered:false};
+  render();
+}
+
+/* ======================= RENDER ======================= */
+function skillChipsHTML(all, active){
+  return all.map(s=>`<span class="skill-tag ${active.includes(s)?'active':''}">${s}</span>`).join('');
+}
+
+function render(){
+  const s = state;
+  document.getElementById('atkName').textContent = s.atk.name;
+  document.getElementById('atkST').textContent = s.atk.st;
+  document.getElementById('atkEffST').textContent = s.atkEff;
+  document.getElementById('defName').textContent = s.def.name;
+  document.getElementById('defST').textContent = s.def.st;
+  document.getElementById('defEffST').textContent = s.defEff;
+
+  document.getElementById('atkSkills').innerHTML = s.atk.skills.length
+    ? s.atk.skills.map(sk=>`<span class="skill-tag active">${sk}</span>`).join('')
+    : `<span class="skill-tag">No skills</span>`;
+  document.getElementById('defSkills').innerHTML = s.def.skills.length
+    ? s.def.skills.map(sk=>`<span class="skill-tag active">${sk}</span>`).join('')
+    : `<span class="skill-tag">No skills</span>`;
+
+  document.getElementById('offAssistVal').innerHTML = `<span class="val">${s.offAssists}</span>`;
+  document.getElementById('defAssistVal').innerHTML = `<span class="val">${s.defAssists}</span>`;
+
+  // Ruling
+  let ruleText, ruleNote;
+  if(s.dice.n===1){
+    ruleText = `1 die — no one chooses`;
+    ruleNote = `Effective strength is tied (${s.atkEff} vs ${s.atkEff}), so it's a single block die and the result stands as rolled.`;
+  } else {
+    ruleText = `<span class="n">${s.dice.n} dice</span> — ${s.dice.chooser} picks the result`;
+    if(s.dice.chooser==='attacker'){
+      ruleNote = `Attacker's effective strength (${s.atkEff}) beats the defender's (${s.defEff})${s.atkEff>=s.defEff*2?', and doubles it':''}, so the attacking coach rolls ${s.dice.n} dice and chooses which one applies.`;
+    } else {
+      ruleNote = `Defender's effective strength (${s.defEff}) beats the attacker's (${s.atkEff})${s.defEff>=s.atkEff*2?', and doubles it':''}, so the defending coach rolls ${s.dice.n} dice and chooses which one applies — bad news for the attacker.`;
+    }
+  }
+  document.getElementById('rulingMain').textContent = ruleText.replace(/<[^>]+>/g,'');
+  document.getElementById('rulingMain').innerHTML = ruleText;
+  document.getElementById('rulingNote').textContent = ruleNote;
+
+  // Face row — show effective meaning of each unique face given current skills
+  const uniqueFaces = ['AD','BD','PU','DS','DD'];
+  const faceRow = document.getElementById('faceRow');
+  faceRow.innerHTML = uniqueFaces.map(f=>{
+    const o = resolveFace(f, s.atk, s.def);
+    const succ = s.successFn(o);
+    let note = '';
+    if(f==='DS' && o.negated) note = ' → downgraded to Push (Dodge)';
+    if(f==='BD' && o.converted) note = ' → downgraded to Push (Juggernaut)';
+    if(f==='BD' && !o.converted) note = ` (attacker ${o.aFalls?'falls':'stands'}, defender ${o.dFalls?'falls':'stands'})`;
+    return `<span class="face-chip ${succ?'good':'bad'}">${FACE_LABEL[f]}${note}</span>`;
+  }).join('');
+
+  // Goal
+  const goalTag = document.getElementById('goalTag');
+  const goalMain = document.getElementById('goalMain');
+  const goalTarget = document.getElementById('goalTarget');
+  const goalNote = document.getElementById('goalNote');
+
+  // Work out which of the 5 distinct face results actually count as a "hit" right now
+  const hitFaces = uniqueFaces.filter(f => s.successFn(resolveFace(f, s.atk, s.def)));
+  const hitLabels = hitFaces.map(f=>FACE_LABEL[f]);
+  const targetStr = hitLabels.length
+    ? hitLabels.join(', ')
+    : 'nothing — every result on this die goes against you';
+
+  if(s.goal==='noturnover'){
+    goalTag.textContent = 'Target: avoid a turnover';
+    goalMain.textContent = 'What are the odds this block does NOT knock your own player down?';
+    goalTarget.innerHTML = `You're rolling for: <b>${targetStr}</b>`;
+    goalNote.textContent = `An Attacker Down always ends your turn. A Both Down only ends it if your player doesn't have Block (and can't dodge out of it with Juggernaut).`;
+  } else {
+    goalTag.textContent = 'Target: put the defender on the floor';
+    goalMain.textContent = 'What are the odds the defender ends up knocked down?';
+    goalTarget.innerHTML = `You're rolling for: <b>${targetStr}</b>`;
+    goalNote.textContent = `Defender Down always works. Defender Stumbles only works if the defender lacks Dodge (or you have Tackle). Both Down counts as long as the defender doesn't have Block.`;
+  }
+
+  // Options
+  const optionsRow = document.getElementById('optionsRow');
+  optionsRow.innerHTML = '';
+  s.opts.bands.forEach((band, i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.textContent = `${band[0]}–${band[1]}%`;
+    btn.onclick = ()=>selectOption(i);
+    optionsRow.appendChild(btn);
+  });
+
+  document.getElementById('reveal').classList.remove('show');
+  document.getElementById('scoreBox').textContent = `${score.right} / ${score.total}`;
+}
+
+function selectOption(i){
+  if(state.answered) return;
+  state.answered = true;
+  score.total++;
+  const correct = i === state.opts.correctIndex;
+  if(correct) score.right++;
+
+  const buttons = document.querySelectorAll('.opt');
+  buttons.forEach((b, idx)=>{
+    b.disabled = true;
+    if(idx === state.opts.correctIndex) b.classList.add('correct');
+    else if(idx === i) b.classList.add('wrong');
+    else b.classList.add('dim');
+  });
+
+  document.getElementById('scoreBox').textContent = `${score.right} / ${score.total}`;
+  showReveal(correct);
+}
+
+function showReveal(correct){
+  const s = state;
+  const verdict = document.getElementById('verdict');
+  verdict.textContent = correct ? 'Good call.' : 'Off the mark.';
+  verdict.className = 'verdict ' + (correct ? 'right' : 'miss');
+  document.getElementById('truep').textContent = `${s.result.pct.toFixed(1)}%`;
+
+  const n = s.dice.n;
+  const chooserLine = n===1
+    ? `Only one die is rolled, so every face is equally likely (1 in 6 each).`
+    : `${s.dice.chooser === 'attacker' ? 'The attacker' : 'The defender'} rolls ${n} dice and keeps whichever single result suits them best, so we check every possible combination of ${n} dice (${Math.pow(6,n)} total) and see which ones still land on your target after they've made their pick.`;
+
+  let faceTableRows = '';
+  if(n===1){
+    const uniqueFaces = ['AD','BD','PU','PU','DS','DD'];
+    faceTableRows = uniqueFaces.map(f=>{
+      const o = resolveFace(f, s.atk, s.def);
+      const succ = s.successFn(o);
+      return `<tr><td>${FACE_LABEL[f]}</td><td>1/6</td><td class="${succ?'tag-succ':'tag-fail'}">${succ?'✓ hits target':'✗ misses'}</td></tr>`;
+    }).join('');
+  }
+
+  const html = `
+    <div class="step"><b>Effective strength:</b> ${s.atk.name} ${s.atk.st} + ${s.offAssists} assist${s.offAssists===1?'':'s'} = ${s.atkEff}, vs ${s.def.name} ${s.def.st} + ${s.defAssists} assist${s.defAssists===1?'':'s'} = ${s.defEff}.</div>
+    <div class="step"><b>Dice:</b> ${chooserLine}</div>
+    ${n===1 ? `<table class="facetable"><tr><th>Face</th><th>Chance</th><th>Result</th></tr>${faceTableRows}</table>` : ''}
+    <div class="step"><b>Result:</b> ${s.result.successCount} of ${s.result.total} possible dice combinations end with the chooser landing on a face that hits your target → <b>${s.result.pct.toFixed(1)}%</b>.</div>
+    <div class="step" style="color:var(--chalk-dim); border-color:var(--line);">Your call: ${s.opts.bands[correctIndexOf(s)]?.join('–') ?? ''}% was the range that actually contained it.</div>
+  `;
+  document.getElementById('breakdownBody').innerHTML = html;
+  document.getElementById('reveal').classList.add('show');
+}
+function correctIndexOf(s){ return s.opts.correctIndex; }
+
+document.getElementById('nextBtn').addEventListener('click', newScenario);
+
+newScenario();
+</script>
+</body>
+</html>

@@ -53,12 +53,12 @@
   .sub{color:var(--chalk-dim);font-size:13px;}
 
   .tabs{
-    display:flex;gap:6px;margin:18px 0 10px;
+    display:flex;flex-wrap:wrap;gap:6px;margin:18px 0 10px;
     background:var(--card);border:1px solid var(--turf-line);
     border-radius:12px;padding:4px;
   }
   .tab{
-    flex:1;text-align:center;padding:10px 4px;border-radius:9px;
+    flex:1 1 30%;text-align:center;padding:10px 4px;border-radius:9px;
     font-size:12.5px;font-weight:700;cursor:pointer;color:var(--chalk-dim);
     line-height:1.25;border:1px solid transparent;
     transition:.15s;
@@ -125,6 +125,12 @@
   .guard-badge{
     position:absolute;bottom:-6px;right:-6px;
     background:#7a4fc9;color:#fff;border:2px solid var(--turf-dark);
+    border-radius:5px;width:17px;height:17px;font-size:9px;
+    display:flex;align-items:center;justify-content:center;font-weight:800;
+  }
+  .defensive-badge{
+    position:absolute;bottom:-6px;left:-6px;
+    background:#2f7fc9;color:#fff;border:2px solid var(--turf-dark);
     border-radius:5px;width:17px;height:17px;font-size:9px;
     display:flex;align-items:center;justify-content:center;font-weight:800;
   }
@@ -197,6 +203,8 @@
     <span><span class="dot" style="background:var(--off)"></span>Offense (attacker's team)</span>
     <span><span class="dot" style="background:var(--def)"></span>Defense (target's team)</span>
     <span><b style="color:var(--chalk)">B</b> = block attacker &nbsp; <b style="color:var(--chalk)">T</b> = target</span>
+    <span><span class="dot" style="background:#7a4fc9"></span>G = Guard</span>
+    <span><span class="dot" style="background:#2f7fc9"></span>D = Defensive (cancels Guard on marked opponents)</span>
   </div>
 
   <div class="pitch">
@@ -225,9 +233,12 @@
 
 <script>
 const MODES = [
-  {key:'basic',  label:'Base Line',   sub:'ST 3 vs ST 3',        total:200, strengths:false, guard:false},
-  {key:'mixed',  label:'Mismatch',    sub:'Varied strength',     total:200, strengths:true,  guard:false},
-  {key:'skills', label:'Guard Duty',  sub:'ST 3 + Guard skill',  total:200, strengths:false, guard:true},
+  {key:'basic',        label:'Base Line',     sub:'ST 3 vs ST 3',                 total:50, strengths:false, guard:false, defensive:false},
+  {key:'mixed',        label:'Mismatch',      sub:'Varied strength',              total:50, strengths:true,  guard:false, defensive:false},
+  {key:'skills',       label:'Guard Duty',    sub:'ST 3 + Guard',                 total:50, strengths:false, guard:true,  defensive:false},
+  {key:'mixedGuard',   label:'Guard Mismatch',sub:'Varied strength + Guard',      total:50, strengths:true,  guard:true,  defensive:false},
+  {key:'lockedDown',   label:'Locked Down',   sub:'ST 3 + Guard + Defensive',     total:50, strengths:false, guard:true,  defensive:true},
+  {key:'fullSquad',    label:'Full Squad',    sub:'Varied str + Guard + Defensive',total:50, strengths:true,  guard:true,  defensive:true},
 ];
 const R=6, C=5;
 const COLS=['A','B','C','D','E'];
@@ -305,20 +316,32 @@ function generatePuzzle(mode){
     team: Math.random()<0.5 ? 'off' : 'def',
   }));
 
-  const attackerP = {...attacker, team:'off', role:'B', str: mode.strengths?pickStrength():3, guard:false};
-  const targetP   = {...target,   team:'def', role:'T', str: mode.strengths?pickStrength():3, guard:false};
+  const attackerP = {...attacker, team:'off', role:'B', str: mode.strengths?pickStrength():3, guard:false, defensive:false};
+  const targetP   = {...target,   team:'def', role:'T', str: mode.strengths?pickStrength():3, guard:false,
+                      defensive: mode.defensive ? (Math.random()<0.3) : false};
   extras.forEach(p=>{
     p.str = mode.strengths ? pickStrength() : 3;
     p.guard = mode.guard ? (Math.random()<0.35) : false;
+    p.defensive = (mode.defensive && p.team==='def') ? (Math.random()<0.3) : false;
     p.role = null;
   });
 
   const players = [attackerP, targetP, ...extras];
 
-  const offAssisters = players.filter(p =>
-    p.team==='off' && p!==attackerP && isAdj(p,targetP) &&
-    (p.guard || !players.some(y => y.team==='def' && y!==targetP && isAdj(p,y)))
-  );
+  // Defensive: opposition players Marked by a player with this skill cannot use
+  // Guard (or Put the Boot In) during this turn. So an offensive player's Guard
+  // is switched off if they're adjacent to ANY defensive-team player with Defensive.
+  const markedByDefensive = (p) => players.some(d => d.team==='def' && d.defensive && isAdj(p,d));
+
+  const offAssisters = players.filter(p => {
+    if(!(p.team==='off' && p!==attackerP && isAdj(p,targetP))) return false;
+    const effectiveGuard = p.guard && !markedByDefensive(p);
+    return effectiveGuard || !players.some(y => y.team==='def' && y!==targetP && isAdj(p,y));
+  });
+  const blockedByDefensive = players.filter(p => {
+    if(!(p.team==='off' && p!==attackerP && isAdj(p,targetP) && p.guard && markedByDefensive(p))) return false;
+    return players.some(y => y.team==='def' && y!==targetP && isAdj(p,y));
+  });
   const defAssisters = players.filter(p =>
     p.team==='def' && p!==targetP && isAdj(p,attackerP) &&
     (p.guard || !players.some(g => g.team==='off' && g!==attackerP && isAdj(p,g)))
@@ -332,7 +355,7 @@ function generatePuzzle(mode){
   else if(offStr > defStr) answer = (offStr > 2*defStr) ? 'E' : 'D';
   else answer = (defStr > 2*offStr) ? 'A' : 'B';
 
-  return {players, attacker:attackerP, target:targetP, offAssisters, defAssisters, offStr, defStr, answer};
+  return {players, attacker:attackerP, target:targetP, offAssisters, defAssisters, blockedByDefensive, offStr, defStr, answer};
 }
 
 function renderBoard(p){
@@ -365,6 +388,12 @@ function renderBoard(p){
           gb.className='guard-badge';
           gb.textContent='G';
           tok.appendChild(gb);
+        }
+        if(pl.defensive){
+          const db=document.createElement('div');
+          db.className='defensive-badge';
+          db.textContent='D';
+          tok.appendChild(db);
         }
         cell.appendChild(tok);
       }
@@ -403,6 +432,9 @@ function selectAnswer(letter){
   const off=current.offStr, def=current.defStr;
   const oN=current.offAssisters.length, dN=current.defAssisters.length;
   const aDef = ANSWER_DEFS.find(a=>a.letter===current.answer);
+  const defNote = current.blockedByDefensive.length
+    ? `<br><span style="color:#7db8e8">Defensive negated Guard on ${current.blockedByDefensive.length} marked player${current.blockedByDefensive.length===1?'':'s'}, so ${current.blockedByDefensive.length===1?'that assist':'those assists'} didn't count.</span>`
+    : '';
 
   feedbackEl.className='feedback show';
   feedbackEl.innerHTML = `
@@ -410,7 +442,7 @@ function selectAnswer(letter){
     <div class="math">
       Attacker: ST<b>${current.attacker.str}</b> + ${oN} assist${oN===1?'':'s'} = <b>${off}</b><br>
       Defender: ST<b>${current.target.str}</b> + ${dN} assist${dN===1?'':'s'} = <b>${def}</b><br>
-      Result: <b>${aDef.dice} dice</b>, ${aDef.chooser === 'attacker' ? 'attacker chooses' : 'defender (target) chooses'}
+      Result: <b>${aDef.dice} dice</b>, ${aDef.chooser === 'attacker' ? 'attacker chooses' : 'defender (target) chooses'}${defNote}
     </div>
   `;
 
