@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blood Bowl Team Comparator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pitch-0:#07130c;
+    --pitch-1:#0d1f14;
+    --pitch-2:#13291a;
+    --pitch-3:#1c3624;
+    --line:#2c4a34;
+    --gold:#d4af37;
+    --gold-soft:#e8cf7a;
+    --text:#e9f2ea;
+    --text-dim:#9db3a4;
+    --danger:#c0503f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 15% -10%, #1a3322 0%, transparent 45%),
+      radial-gradient(circle at 110% 10%, #16281c 0%, transparent 40%),
+      var(--pitch-0);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding:24px 16px 60px;
+  }
+  h1,h2,h3{font-family:'Anton',sans-serif;font-weight:400;letter-spacing:0.5px;}
+  header{max-width:1400px;margin:0 auto 20px;text-align:center;}
+  header h1{
+    font-size:clamp(28px,5vw,44px);
+    margin:0 0 4px;
+    color:var(--gold-soft);
+    text-transform:uppercase;
+    text-shadow:0 2px 0 rgba(0,0,0,0.5);
+  }
+  header p{color:var(--text-dim);margin:0;font-size:14px;}
+
+  .controls{
+    max-width:1400px;margin:0 auto 24px;
+    display:grid;grid-template-columns:1fr 1fr;gap:16px;
+  }
+  @media (max-width:760px){.controls{grid-template-columns:1fr;}}
+
+  .team-picker{
+    background:linear-gradient(180deg,var(--pitch-2),var(--pitch-1));
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:14px 16px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .team-picker.side-a{border-top:3px solid #5fb3d9;}
+  .team-picker.side-b{border-top:3px solid #d9895f;}
+  .team-picker label{
+    font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);
+    white-space:nowrap;
+  }
+  select{
+    flex:1;
+    background:var(--pitch-0);
+    color:var(--text);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:10px 12px;
+    font-size:15px;
+    font-family:'Inter',sans-serif;
+  }
+  select:focus{outline:2px solid var(--gold);}
+
+  .board{
+    max-width:1400px;margin:0 auto;
+    display:grid;grid-template-columns:1fr 1fr;gap:16px;
+  }
+  @media (max-width:900px){.board{grid-template-columns:1fr;}}
+
+  .team-card{
+    background:linear-gradient(180deg,var(--pitch-2) 0%,var(--pitch-1) 100%);
+    border:1px solid var(--line);
+    border-radius:12px;
+    overflow:hidden;
+  }
+  .team-card.side-a{box-shadow:inset 3px 0 0 #5fb3d9;}
+  .team-card.side-b{box-shadow:inset 3px 0 0 #d9895f;}
+
+  .team-head{
+    padding:16px 18px 12px;
+    border-bottom:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;
+  }
+  .team-head h2{margin:0;font-size:24px;color:var(--gold-soft);text-transform:uppercase;}
+  .meta-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+  .chip{
+    font-size:11px;padding:3px 9px;border-radius:20px;
+    background:var(--pitch-3);border:1px solid var(--line);color:var(--text-dim);
+    text-transform:uppercase;letter-spacing:0.5px;
+  }
+  .chip.tier{color:var(--gold-soft);border-color:var(--gold);}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{
+    position:sticky;top:0;
+    background:var(--pitch-3);
+    color:var(--text-dim);
+    text-transform:uppercase;
+    font-size:10px;
+    letter-spacing:0.5px;
+    padding:8px 6px;
+    text-align:center;
+    border-bottom:1px solid var(--line);
+  }
+  thead th.pos-col{text-align:left;}
+  tbody td{
+    padding:8px 6px;
+    text-align:center;
+    border-bottom:1px solid rgba(44,74,52,0.5);
+    vertical-align:top;
+  }
+  tbody tr:hover{background:rgba(212,175,55,0.05);}
+  .pos-col{text-align:left;}
+  .pos-name{font-weight:600;color:var(--text);}
+  .pos-types{display:block;font-size:10px;color:var(--text-dim);font-weight:400;margin-top:1px;}
+  .qty{color:var(--gold-soft);font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .cost{color:var(--text-dim);white-space:nowrap;}
+  .skills-col{text-align:left;font-size:11.5px;color:#c9d9cd;line-height:1.5;min-width:170px;}
+  .skill-tag{
+    display:inline-block;background:var(--pitch-3);border:1px solid var(--line);
+    border-radius:4px;padding:1px 6px;margin:1px 3px 1px 0;font-size:11px;color:var(--text);
+  }
+  .stat{font-variant-numeric:tabular-nums;}
+  .notes-col{min-width:130px;}
+  .notes-col input{
+    width:100%;
+    background:var(--pitch-0);
+    border:1px solid var(--line);
+    border-radius:5px;
+    color:var(--gold-soft);
+    padding:6px 7px;
+    font-size:12px;
+    font-family:'Inter',sans-serif;
+  }
+  .notes-col input::placeholder{color:#5a7767;}
+  .notes-col input:focus{outline:1px solid var(--gold);}
+
+  .table-wrap{overflow-x:auto;max-height:70vh;overflow-y:auto;}
+
+  .empty-state{
+    display:flex;align-items:center;justify-content:center;
+    min-height:300px;color:var(--text-dim);font-size:14px;padding:20px;text-align:center;
+  }
+
+  footer{max-width:1400px;margin:24px auto 0;text-align:center;color:var(--text-dim);font-size:12px;}
+  footer a{color:var(--gold-soft);}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Blood Bowl Team Comparator</h1>
+  <p>Pick your team and the opposition — full rosters side by side, at a glance.</p>
+</header>
+
+<div class="controls">
+  <div class="team-picker side-a">
+    <label for="teamA">My Team</label>
+    <select id="teamA"></select>
+  </div>
+  <div class="team-picker side-b">
+    <label for="teamB">Opponent</label>
+    <select id="teamB"></select>
+  </div>
+</div>
+
+<div class="board">
+  <div class="team-card side-a" id="cardA"></div>
+  <div class="team-card side-b" id="cardB"></div>
+</div>
+
+<footer>Data source: bloodbowlbase.ru (2025 core rules) &middot; Notes are session-only and clear on reload.</footer>
+
+<script>
+// ---------- DATA ----------
+// n = qty, p = position name, types = subtypes, ma/st/ag/pa/av, sk = skills, c = cost (K)
+const TEAMS = {
+"Amazon": {tier:1, league:"Lustrian Superleague", rr:60, positionals:[
+  {n:"0‑16", p:"Eagle Warrior", types:"Lineman, Human", ma:6, st:3, ag:"3+", pa:"4+", av:"8+", sk:["Dodge"], c:"50K"},
+  {n:"0‑2", p:"Python Warrior", types:"Thrower, Human", ma:6, st:3, ag:"3+", pa:"3+", av:"8+", sk:["Dodge","On the Ball","Pass","Safe Pass"], c:"80K"},
+  {n:"0‑2", p:"Piranha Warrior", types:"Blitzer, Human", ma:7, st:3, ag:"3+", pa:"4+", av:"8+", sk:["Dodge","Hit and Run","Jump Up"], c:"90K"},
+  {n:"0‑2", p:"Jaguar Warrior", types:"Blocker, Human", ma:6, st:4, ag:"3+", pa:"4+", av:"9+", sk:["Defensive","Dodge"], c:"110K"}
+]},
+"Black Orc": {tier:3, league:"Badlands Brawl", rr:60, positionals:[
+  {n:"0‑16", p:"Goblin Bruiser", types:"Lineman, Goblin", ma:6, st:2, ag:"3+", pa:"4+", av:"8+", sk:["Dodge","Right Stuff","Stunty","Thick Skull"], c:"45K"},
+  {n:"0‑6", p:"Black Orc", types:"Blocker, Orc", ma:4, st:4, ag:"4+", pa:"5+", av:"10+", sk:["Brawler","Grab"], c:"90K"},
+  {n:"0‑1", p:"Trained Troll", types:"Big Guy, Troll", ma:4, st:5, ag:"5+", pa:"5+", av:"10+", sk:["Always Hungry","Mighty Blow","Projectile Vomit","Really Stupid","Regeneration","Throw Team-mate"], c:"115K"}
+]},
+"Bretonnian": {tier:2, league:"Old World Classic", rr:60, positionals:[
+  {n:"0‑16", p:"Bretonnian Squire", types:"Lineman, Human", ma:6, st:3, ag:"3+", pa:"4+", av:"8+", sk:["Wrestle"], c:"50K"},
+  {n:"0‑2", p:"Bretonnian Knight Catcher", types:"Catcher, Human", ma:7, st:3, ag:"3+", pa:"4+", av:"9+", sk:["Catch","Dauntless","Nerves of Steel"], c:"85K"},
+  {n:"0‑2", p:"Bretonnian Knight Thrower", types:"Thrower, Human", ma:6, st:3, ag:"3+", pa:"3+", av:"9+", sk:["Dauntless","Nerves of Steel","Pass"], c:"80K"},
+  {n:"0‑2", p:"Grail Knight", types:"Blitzer, Human", ma:7, st:3, ag:"3+", pa:"4+", av:"10+", sk:["Block","Dauntless","Steady Footing"], c:"95K"}
+]},
+"Chaos Chosen": {tier:3, league:"Chaos Clash", rr:50, positionals:[
+  {n:"0‑16", p:"Beastman Lineman", types:"Lineman, Beastman", ma:6, st:3, ag:"3+", pa:"3+", av:"9+", sk:["Horns","Thick Skull"], c:"55K"},
+  {n:"0‑4", p:"Chaos Chosen", types:"Blocker, Human", ma:5, st:4, ag:"3+", pa:"5+", av:"10+", sk:["Arm Bar"], c:"100K"},
+  {n:"0‑1*", p:"Troll", types:"Big Guy, Troll", ma:4, st:5, ag:"5+", pa:"5+", av:"10+", sk:["Always Hungry","Loner (4+)","Mighty Blow","Projectile Vomit","Really Stupid","Regeneration","Throw Team-mate"], c:"115K"},
+  {n:"0‑1*", p:"Ogre", types:"Big Guy, Ogre", ma:5, st:5, ag:"4+", pa:"5+", av:"10+", sk:["Bone Head","Loner (4+)","Mighty Blow","Thick Skull","Throw Team-mate"], c:"140K"},
+  {n:"0‑1*", p:"Minotaur", types:"Big Guy, Minotaur", ma:5, st:5, ag:"4+", pa:"6+", av:"9+", sk:["Frenzy","Horns","Loner (4+)","Mighty Blow","Thick Skull","Unchannelled Fury"], c:"150K"}
+], note:"*Team may field only one Big Guy, chosen from these three."},
+"Chaos Dwarf": {tier:1, league:"Badlands Brawl / Chaos Clash", rr:70, positionals:[
+  {n:"0‑16", p:"Hobgoblin Lineman", types:"Lineman, Goblin", ma:6, st:3, ag:"3+", pa:"4+", av:"8+", sk:[], c:"40K"},
+  {n:"0‑2", p:"Sneaky Stabba", types:"Special, Goblin", ma:6, st:3, ag:"3+", pa:"5+", av:"8+", sk:["Shadowing","Stab"], c:"60K"},
+  {n:"0‑4", p:"Chaos Dwarf Blocker", types:"Blocker, Dwarf", ma:4, st:3, ag:"4+", pa:"6+", av:"10+", sk:["Block","Iron Hard Skin","Thick Skull"], c:"70K"},
+  {n:"0‑2", p:"Flamesmith", types:"Special, Dwarf", ma:5, st:3, ag:"4+", pa:"6+", av:"10+", sk:["Brawler","Breathe Fire","Disturbing Presence","Thick Skull"], c:"80K"},
+  {n:"0‑2", p:"Bull Centaur", types:"Blitzer, Dwarf", ma:6, st:4, ag:"4+", pa:"6+", av:"10+", sk:["Sprint","Sure Feet","Thick Skull","Unsteady"], c:"130K"},
+  {n:"0‑1", p:"Minotaur", types:"Big Guy, Minotaur", ma:5, st:5, ag:"4+", pa:"6+", av:"9+", sk:["Frenzy","Horns","Loner (4+)","Mighty Blow","Thick Skull","Unchannelled Fury"], c:"150K"}
+]},
+"Chaos Renegades": {tier:3, league:"Chaos Clash", rr:70, positionals:[
+  {n:"0‑16", p:"Renegade Human", types:"Lineman, Human", ma:6, st:3, ag:"3+", pa:"4+", av:"9+", sk:["Animosity (All)"], c:"50K"},
+  {n:"0‑1", p:"Renegade Goblin", types:"Goblin, Lineman", ma:6, st:2, ag:"3+", pa:"4+", av:"8+", sk:["Animosity (All)","Dodge","Right Stuff","Stunty"], c:"40K"},
+  {n:"0‑1", p:"Renegade Orc", types:"Lineman, Orc", ma:5, st:3, ag:"3+", pa:"4+", av:"10+", sk:["Animosity (All)"], c:"50K"},
+  {n:"0‑1", p:"Renegade Skaven", types:"Lineman, Skaven", ma:7, st:3, ag:"3+", pa:"4+", av:"8+", sk:["Animosity (All)"], c:"50K"},
+  {n:"0‑1", p:"Renegade Dark Elf", types:"Elf, Lineman", ma:6, st:3, ag:"2+", pa:"3+", av:"9+", sk:["Animosity (All)"], c:"65K"},
+  {n:"0‑1", p:"Renegade Human Thrower", types:"Human, Thrower", ma:6, st:3, ag:"3+", pa:"3+", av:"9+", sk:["Animosity (All)","Pass","Sure Hands"], c:"75K"},
+  {n:"0‑1*", p:"Troll", types:"Big Guy, Troll", ma:4, st:5, ag:"5+", pa:"5+", av:"10+", sk:["Always Hungry","Loner (4+)","Mighty Blow","Projectile Vomit","Really Stupid","Regeneration","Throw Team-mate"], c:"115K"},
+  {n:"0‑1*", p:"Ogre", types:"Big Guy, Ogre", ma:5, st:5, ag:"4+", pa:"5+", av:"10+", sk:["Bone Head","Loner (3+)","Mighty Blow","Thick Skull","Throw Team-mate"], c:"140K"},
+  {n:"0‑1*", p:"Minotaur", types:"Big Guy, Minotaur", ma:5, st:5, ag:"4+", pa:"6+", av:"9+", sk:["Frenzy","Horns","Loner (4+)","Mighty Blow","Thick Skull","Unchannelled Fury"], c:"150K"},
+  {n:"0‑1*", p:"Rat Ogre", types:"Big Guy, Skaven", ma:6, st:5, ag:"4+", pa:"6+", av:"9+", sk:["Animal Savagery","Frenzy","Loner (4+)","Mighty Blow","Prehensile Tail"], c:"150K"}
+], note:"*Up to three Big Guys total, chosen from these four."},
+"Dark Elf": {tier:1, league:"Elven Kingdoms League", rr:50, positionals:[
+  {n:"0‑16", p:"Dark Elf Lineman", types:"Lineman, Elf", ma:6, st:3, ag:"2+", pa:"3+", av:"9+", sk:[], c:"65K"},
+  {n:"0‑2", p:"Dark Elf Runner", types:"Runner, Elf", ma:7, st:3, ag:"2+", pa:"3+", av:"8+", sk:["Dump-off","Punt"], c:"80K"},
+  {n:"0‑2", p:"Dark Elf Assassin", types:"Special, Elf", ma:7, st:3, ag:"2+", pa:"4+", av:"8+", sk:["Hit and Run","Shadowing","Stab"], c:"90K"},
+  {n:"0‑2", p:"Dark Elf Blitzer", types:"Blitzer, Elf", ma:7, st:3, ag:"2+", pa:"3+", av:"9+", sk:["Block"], c:"105K"},
+  {n:"0‑2", p:"Witch Elf", types:"Special, Elf", ma:7, st:3, ag:"2+", pa:"4+", av:"8+", sk:["Dodge","Frenzy","Jump Up"], c:"110K"}
+]},
+"Dwarf": {tier:2, league:"Worlds Edge Superleague", rr:60, positionals:[
+  {n:"0‑16", p:"Dwarf Lineman", types:"Lineman, Dwarf", ma:4, st:3, ag:"4+", pa:"5+", av:"10+", sk:["Block","Defensive","Thick Skull"], c:"70K"},
+  {n:"0‑2", p:"Dwarf Runner", types:"Runner, Dwarf", ma:6, st:3, ag:"3+", pa:"4+", av:"9+", sk:["Sprint","Sure Hands","Thick Skull"], c:"80K"},
+  {n:"0‑2", p:"Dwarf Blitzer", types:"Blitzer, Dwarf", ma:5, st:3, ag:"4+", pa:"4+", av:"10+", sk:["Block","Diving Tackle","Tackle","Thick Skull"], c:"100K"},
+  {n:"0‑2", p:"Troll Slayer", types:"Special, Dwarf", ma:5, st:3, ag:"4+", pa:"5+", av:"9+", sk:["Block","Dauntless","Frenzy","Hatred (Troll)","Thick Skull"], c:"95K"},
+  {n:"0‑1", p:"Deathroller", types:"Big Guy, Dwarf, Special", ma:5, st:7, ag:"5+", pa:"-", av:"11+", sk:["Break Tackle","Dirty Player","Juggernaut","Loner (4+)","Mighty Blow","No Ball","Secret Weapon","Stand Firm"], c:"170K"}
+]},
+"Elven Union": {tier:2, league:"Elven Kingdoms League", rr:50, positionals:[
+  {n:"0‑16", p:"Elf Lineman", types:"Lineman, Elf", ma:6, st:3, ag:"2+", pa:"3+", av:"8+", sk:["Fumblerooski"], c:"65K"},
+  {n:"0‑2", p:"Elf Thrower", types:"Thrower, Elf", ma:6, st:3, ag:"2+", pa:"2+", av:"8+", sk:["Hail Mary Pass","Pass"], c:"75K"},
+  {n:"0‑2", p:"Elf Catcher", types:"Catcher, Elf", ma:8, st:3, ag:"2+", pa:"4+", av:"8+", sk:["Catch","Diving Catch","Nerves of Steel"], c:"100K"},
+  {n:"0‑2", p:"Elf Blitzer", types:"Blitzer, Elf", ma:7, st:3, ag:"2+", pa:"3+", av:"9+", sk:["Block","Sidestep"], c:"115K"}
+]},
+"Gnome": {tier:4, league:"Halfling Thimble Cup / Woodland League", rr:50, positionals:[
+  {n:"0‑16", p:"Gnome Lineman", types:"Lineman, Gnome", ma:5, st:2, ag:"3+", pa:"4+", av:"7+", sk:["Jump Up","Right Stuff","Stunty","Wrestle"], c:"40K"},
+  {n:"0‑2", p:"Woodland Fox", types:"Runner, Animal", ma:7, st:2, ag:"2+", pa:"-", av:"6+", sk:["Dodge","My Ball","Sidestep","Stunty"], c:"50K"},
+  {n:"0‑2", p:"Gnome Illusionist", types:"Special, Gnome", ma:5, st:2, ag:"3+", pa:"3+", av:"7+", sk:["Jump Up","Stunty","Trickster","Wrestle"], c:"50K"},
+  {n:"0‑2", p:"Gnome Beastmaster", types:"Blocker, Gnome", ma:5, st:2, ag:"3+", pa:"4+", av:"8+", sk:["Guard","Jump Up","Stunty","Wrestle"], c:"55K"},
+  {n:"0‑2", p:"Altern Forest Treeman", types:"Big Guy, Treeman", ma:2, st:6, ag:"5+", pa:"5+", av:"11+", sk:["Mighty Blow","Stand Firm","Strong Arm","Take Root","Thick Skull","Throw Team-mate","Timmm-ber!"], c:"120K"}
+]},
+"Goblin": {tier:4, league:"Badlands Brawl / Underworld Challenge", rr:60, positionals:[
+  {n:"0‑16", p:"Goblin Lineman", types:"Goblin, Lineman", ma:6, st:2, ag:"3+", pa:"4+", av:"8+", sk:["Dodge","Right Stuff","Stunty"], c:"40K"},
+  {n:"0‑1", p:"Looney", types:"Goblin, Special", ma:6, st:2, ag:"3+", pa:"-", av:"8+", sk:["Chainsaw","No Ball","Secret Weapon","Stunty"], c:"40K"},
+  {n:"0‑1", p:"Bomma", types:"Goblin, Special", ma:6, st:2, ag:"3+", pa:"4+", av:"8+", sk:["Bombardier","Dodge","Secret Weapon","Stunty"], c:"45K"},
+  {n:"0‑1", p:"'Ooligan", types:"Goblin, Special", ma:6, st:2, ag:"3+", pa:"5+", av:"8+", sk:["Dirty Player (+1)","Disturbing Presence","Dodge","Right Stuff","Stunty","Taunt"], c:"60K"},
+  {n:"0‑1", p:"Doom Diver", types:"Goblin, Special", ma:6, st:2, ag:"3+", pa:"6+", av:"8+", sk:["Dodge","Right Stuff","Stunty","Swoop"], c:"65K"},
+  {n:"0‑1", p:"Fanatic", types:"Goblin, Special", ma:3, st:7, ag:"3+", pa:"-", av:"8+", sk:["Ball & Chain","No Ball","Secret Weapon","Stunty"], c:"70K"},
+  {n:"0‑1", p:"Pogoer", types:"Goblin, Special", ma:7, st:2, ag:"3+", pa:"4+", av:"8+", sk:["Dodge","Pogo","Stunty"], c:"75K"},
+  {n:"0‑2", p:"Trained Troll", types:"Big Guy, Troll", ma:4, st:5, ag:"5+", pa:"5+", av:"10+", sk:["Always Hungry","Mighty Blow","Projectile Vomit","Really Stupid","Regeneration","Throw Team-mate"], c:"115K"}
+]},
+"Halfling": {tier:4, league:"Halfling Thimble Cup / Woodland League", rr:60, positionals:[
+  {n:"0‑16", p:"Halfling Hopeful", types:"Lineman, Halfling", ma:5, st:2, ag:"3+", pa:"4+", av:"7+", sk:["Dodge","Right Stuff","Stunty"], c:"30K"},
+  {n:"0‑2", p:"Halfling Hefty", types:"Blocker, Halfling", ma:5, st:2, ag:"3+", pa:"3+", av:"8+", sk:["Dodge","Fend","Stunty"], c:"50K"},
+  {n:"0‑2", p:"Halfling Catcher", types:"Catcher, Halfling", ma:5, st:2, ag:"3+", pa:"4+", av:"7+", sk:["Catch","Dodge","Right Stuff","Sprint","Stunty"], c:"55K"},
+  {n:"0‑2", p:"Athel Forest Treeman", types:"Big Guy, Treeman", ma:2, st:6, ag:"5+", pa:"5+", av:"11+", sk:["Mighty Blow","Stand Firm","Strong Arm","Take Root","Thick Skull","Throw Team-mate","Timmm-ber!"], c:"120K"}
+]},
+"High Elf": {tier:1, league:"Elven Kingdoms League", rr:50, positionals:[
+  {n:"0‑16", p:"High Elf Lineman", types:"Lineman, Elf", ma:6, st:3, ag:"2+", pa:"3+", av:"9+", sk:[], c:"65K"},
+  {n:"0‑2", p:"Phoenix Warrior", types:"Thrower, Elf", ma:6, st:3, ag:"2+", pa:"2+", av:"9+", sk:["Cloud Burster","Pass","Safe Pass"], c:"90K"},
+  {n:"0‑2", p:"Dragon Prince", types:"Blitzer, Elf, Runner", ma:8, st:3, ag:"2+", pa:"4+", av:"9+", sk:["Block","My Ball","Steady Footing"], c:"110K"},
+  {n:"0‑2", p:"White Lion", types:"Blitzer, Elf", ma:7, st:3, ag:"2+", pa:"3+", av:"9+", sk:["Claws","Wrestle"], c:"110K"}
+]},
+"Human": {tier:2, league:"Old World Classic", rr:50, positionals:[
+  {n:"0‑16", p:"Human Lineman", types:"Lineman, Human", ma:6, st:3, ag:"3+", pa:"4+", av:"9+", sk:[], c:"50K"},
+  {n:"0‑3", p:"Halfling Hopeful", types:"Lineman, Halfling", ma:5, st:2, ag:"3+", pa:"4+", av:"7+", sk:["Dodge","Right Stuff","Stunty"], c:"30K"},
+  {n:"0‑2", p:"Human Catcher", types:"Catcher, Human", ma:8, st:3, ag:"3+", pa:"4+", av:"8+", sk:["Catch","Dodge"], c:"75K"},
+  {n:"0‑2", p:"Human Thrower", types:"Thrower, Human", ma:6, st:3, ag:"3+", pa:"3+", av:"9+", sk:["Pass","Sure Hands"], c:"75K"},
+  {n:"0‑2", p:"Human Blitzer", types:"Blitzer, Human", ma:7, st:3, ag:"3+", pa:"4+", av:"9+", sk:["Block","Tackle"], c:"85K"},
+  {n:"0‑1", p:"Ogre", types:"Big Guy, Ogre", ma:5, st:5, ag:"4+", pa:"5+", av:"10+", sk:["Bone Head","Loner (3+)","Mighty Blow","Thick Skull","Throw Team-mate"], c:"140K"}
+], note:"Team Captain special rule: nominate a captain for free Pro."},
+"Imperial Nobility": {tier:2, league:"Old World Classic", rr:60, positionals:[
+  {n:"0‑16", p:"Imperial Retainer", types:"Lineman, Human", ma:6, st:3, ag:"3+", pa:"4+", av:"8+", sk:["Fend"], c:"45K"},
+  {n:"0‑2", p:"Imperial Thrower", types:"Thrower, Human", ma:6, st:3, ag:"3+", pa:"2+", av:"9+", sk:["Give and Go","Pass","Pro"], c:"75K"},
+  {n:"0‑4", p:"Bodyguard", types:"Blocker, Human", ma:5, st:3, ag:"3+", pa:"4+", av:"9+", sk:["Stand Firm","Wrestle"], c:"85K"},
+  {n:"0‑2", p:"Noble Blitzer", types:"Blitzer, Human", ma:7, st:3, ag:"3+", pa:"4+", av:"9+", sk:["Block","Catch","Pro"], c:"90K"},
+  {n:"0‑1", p:"Ogre", types:"Big Guy, Ogre", ma:5, st:5, ag:"4+", pa:"5+", av:"10+", sk:["Bone Head","Loner (3+)","Mighty Blow","Thick Skull","Throw Team-mate"], c:"140K"}
+]},
+"Khorne": {tier:3, league:"Chaos Clash", rr:60, positionals:[
+  {n:"0‑16", p:"Bloodborn Marauder", types:"Lineman, Human", ma:6, st:3, ag:"3+", pa:"4+", av:"8+", sk:["Frenzy"], c:"50K"},
+  {n:"0‑2", p:"Khorngor", types:"Runner, Beastman", ma:6, st:3, ag:"3+", pa:"4+", av:"9+", sk:["Horns","Juggernaut","Jump Up","Thick Skull"], c:"70K"},
+  {n:"0‑4", p:"Bloodseeker", types:"Blocker, Human", ma:5, st:4, ag:"4+", pa:"6+", av:"10+", sk:["Frenzy"], c:"105K"},
+  {n:"0‑1", p:"Bloodspawn", types:"Big Guy, Spawn", ma:5, st:5, ag:"4+", pa:"6+", av:"9+", sk:["Claws","Frenzy","Loner (4+)","Mighty Blow","Unchannelled Fury"], c:"160K"}
+]},
+"Lizardmen": {tier:1, league:"Lustrian Superleague", rr:70, positionals:[
+  {n:"0‑16", p:"Skink Lineman", types:"Lineman, Lizardman", ma:8, st:2, ag:"3+", pa:"4+", av:"8+", sk:["Dodge","Stunty"], c:"60K"},
+  {n:"0‑2", p:"Chameleon Skink", types:"Thrower, Lizardman", ma:7, st:2, ag:"3+", pa:"3+", av:"8+", sk:["Dodge","On the Ball","Shadowing","Stunty"], c:"70K"},
+  {n:"0‑6", p:"Saurus Blocker", types:"Blocker, Lizardman", ma:6, st:4, ag:"5+", pa:"6+", av:"10+", sk:["Juggernaut","Unsteady"], c:"90K"},
+  {n:"0‑1", p:"Kroxigor", types:"Big Guy, Lizardman", ma:6, st:5, ag:"5+", pa:"6+", av:"10+", sk:["Bone Head","Loner (4+)","Mighty Blow","Prehensile Tail","Thick Skull"], c:"140K"}
+]},
+"Necromantic Horror": {tier:2, league:"Sylvanian Spotlight", rr:70, positionals:[
+  {n:"0‑16", p:"Zombie Lineman", types:"Human, Lineman, Undead, Zombie", ma:4, st:3, ag:"4+", pa:"6+", av:"9+", sk:["Eye Gouge","Regeneration","Unsteady"], c:"40K"},
+  {n:"0‑2", p:"Ghoul Runner", types:"Ghoul, Runner, Undead", ma:7, st:3, ag:"3+", pa:"3+", av:"8+", sk:["Dodge","Regeneration"], c:"75K"},
+  {n:"0‑2", p:"Wraith", types:"Blocker, Undead, Wraith", ma:6, st:3, ag:"3+", pa:"-", av:"9+", sk:["Block","Foul Appearance","No Ball","Regeneration","Sidestep"], c:"85K"},
+  {n:"0‑2", p:"Flesh Golem", types:"Blocker, Construct, Undead", ma:4, st:4, ag:"4+", pa:"6+", av:"10+", sk:["Regeneration","Stand Firm","Thick Skull","Unsteady"], c:"110K"},
+  {n:"0‑2", p:"Werewolf", types:"Blitzer, Undead, Werewolf", ma:8, st:3, ag:"3+", pa:"3+", av:"9+", sk:["Claws","Frenzy","Regeneration"], c:"120K"}
+]},
+"Norse": {tier:1, league:"Old World Classic / Chaos Clash", rr:60, positionals:[
+  {n:"0‑16", p:"Norse Raider", types:"Lineman, Human", ma:6, st:3, ag:"3+", pa:"4+", av:"8+", sk:["Block","Drunkard","Thick Skull","Unsteady"], c:"50K"},
+  {n:"0‑2", p:"Beer Boar", types:"Special, Animal", ma:5, st:1, ag:"3+", pa:"-", av:"6+", sk:["Dodge","No Ball","Pick-me-up","Stunty","Titchy"], c:"20K"},
+  {n:"0‑2", p:"Norse Berserker", types:"Blitzer, Human", ma:6, st:3, ag:"3+", pa:"5+", av:"8+", sk:["Block","Frenzy","Jump Up"], c:"90K"},
+  {n:"0‑2", p:"Valkyrie", types:"Catcher, Human, Thrower", ma:7, st:3, ag:"3+", pa:"3+", av:"8+", sk:["Catch","Dauntless","Pass","Strip Ball"], c:"95K"},
+  {n:"0‑2", p:"Ulfwerener", types:"Blocker, Human", ma:6, st:4, ag:"4+", pa:"6+", av:"9+", sk:["Frenzy","Unsteady"], c:"105K"},
+  {n:"0‑1", p:"Yhetee", types:"Big Guy, Yhetee", ma:5, st:5, ag:"4+", pa:"6+", av:"9+", sk:["Claws","Disturbing Presence","Frenzy","Loner (4+)","Unchannelled Fury"], c:"140K"}
+]},
+"Nurgle": {tier:3, league:"Chaos Clash", rr:60, positionals:[
+  {n:"0‑16", p:"Rotter", types:"Lineman, Human", ma:5, st:3, ag:"4+", pa:"6+", av:"9+", sk:["Decay","Plague Ridden"], c:"40K"},
+  {n:"0‑2", p:"Pestigor", types:"Runner, Beastman", ma:6, st:3, ag:"3+", pa:"4+", av:"9+", sk:["Horns","Plague Ridden","Regeneration","Steady Footing","Thick Skull"], c:"70K"},
+  {n:"0‑4", p:"Bloater", types:"Blocker, Human", ma:4, st:4, ag:"4+", pa:"6+", av:"10+", sk:["Disturbing Presence","Foul Appearance","Plague Ridden","Regeneration","Stand Firm","Unsteady"], c:"110K"},
+  {n:"0‑1", p:"Rotspawn", types:"Big Guy, Spawn", ma:4, st:5, ag:"5+", pa:"6+", av:"10+", sk:["Disturbing Presence","Foul Appearance","Loner (4+)","Mighty Blow","Pick-me-up","Plague Ridden","Really Stupid","Regeneration","Tentacles"], c:"140K"}
+]},
+"Ogre": {tier:4, league:"Badlands Brawl / Worlds Edge Superleague", rr:70, positionals:[
+  {n:"0‑16", p:"Gnoblar Lineman", types:"Gnoblar, Lineman", ma:5, st:1, ag:"3+", pa:"4+", av:"6+", sk:["Dodge","Right Stuff","Sidestep","Stunty","Titchy"], c:"15K"},
+  {n:"0‑5", p:"Ogre Blocker", types:"Big Guy, Blocker, Ogre", ma:5, st:5, ag:"4+", pa:"5+", av:"10+", sk:["Bone Head","Mighty Blow","Thick Skull","Throw Team-mate"], c:"140K"},
+  {n:"0‑1", p:"Ogre Runt Punter", types:"Big Guy, Ogre, Thrower", ma:5, st:5, ag:"4+", pa:"4+", av:"10+", sk:["Bone Head","Kick Team-mate","Mighty Blow","Thick Skull"], c:"145K"}
+]},
+"Old World Alliance": {tier:1, league:"Old World Classic", rr:70, positionals:[
+  {n:"0‑16", p:"Human Lineman", types:"Lineman, Human", ma:6, st:3, ag:"3+", pa:"4+", av:"9+", sk:[], c:"50K"},
+  {n:"0‑3", p:"Halfling Hopeful", types:"Lineman, Halfling", ma:5, st:2, ag:"3+", pa:"4+", av:"7+", sk:["Dodge","Right Stuff","Stunty"], c:"30K"},
+  {n:"0‑1", p:"Human Catcher", types:"Catcher, Human", ma:8, st:3, ag:"3+", pa:"4+", av:"8+", sk:["Catch","Dodge"], c:"75K"},
+  {n:"0‑3", p:"Dwarf Lineman", types:"Lineman, Dwarf", ma:4, st:3, ag:"4+", pa:"5+", av:"10+", sk:["Block","Defensive","Thick Skull"], c:"70K"},
+  {n:"0‑1", p:"Human Thrower", types:"Thrower, Human", ma:6, st:3, ag:"3+", pa:"3+", av:"9+", sk:["Pass","Sure Hands"], c:"75K"},
+  {n:"0‑1", p:"Dwarf Runner", types:"Runner, Dwarf", ma:6, st:3, ag:"3+", pa:"4+", av:"9+", sk:["Sprint","Sure Hands","Thick Skull"], c:"80K"},
+  {n:"0‑1", p:"Human Blitzer", types:"Blitzer, Human", ma:7, st:3, ag:"3+", pa:"4+", av:"9+", sk:["Block","Tackle"], c:"85K"},
+  {n:"0‑1", p:"Dwarf Blitzer", types:"Blitzer, Dwarf", ma:5, st:3, ag:"4+", pa:"4+", av:"10+", sk:["Block","Diving Tackle","Tackle","Thick Skull"], c:"100K"},
+  {n:"0‑1", p:"Troll Slayer", types:"Special, Dwarf", ma:5, st:3, ag:"4+", pa:"5+", av:"9+", sk:["Block","Dauntless","Frenzy","Hatred (Troll)","Thick Skull"], c:"95K"},
+  {n:"0‑1*", p:"Ogre", types:"Big Guy, Ogre", ma:5, st:5, ag:"4+", pa:"5+", av:"10+", sk:["Bone Head","Loner (3+)","Mighty Blow","Thick Skull","Throw Team-mate"], c:"140K"},
+  {n:"0‑1*", p:"Altern Forest Treeman", types:"Big Guy, Treeman", ma:2, st:6, ag:"5+", pa:"5+", av:"11+", sk:["Loner (4+)","Mighty Blow","Stand Firm","Strong Arm","Take Root","Thick Skull","Throw Team-mate","Timmm-ber!"], c:"120K"}
+], note:"*Team may field only one Big Guy, chosen from these two."},
+"Orc": {tier:2, league:"Badlands Brawl", rr:60, positionals:[
+  {n:"0‑16", p:"Orc Lineman", types:"Lineman, Orc", ma:5, st:3, ag:"3+", pa:"4+", av:"10+", sk:[], c:"50K"},
+  {n:"0‑4", p:"Goblin Lineman", types:"Lineman, Goblin", ma:6, st:2, ag:"3+", pa:"4+", av:"8+", sk:["Dodge","Right Stuff","Stunty"], c:"40K"},
+  {n:"0‑2", p:"Orc Thrower", types:"Thrower, Orc", ma:6, st:3, ag:"3+", pa:"3+", av:"9+", sk:["Pass","Sure Hands"], c:"75K"},
+  {n:"0‑2", p:"Orc Blitzer", types:"Blitzer, Orc", ma:6, st:3, ag:"3+", pa:"4+", av:"10+", sk:["Block","Break Tackle"], c:"85K"},
+  {n:"0‑2", p:"Big Un Blocker", types:"Blocker, Orc", ma:5, st:4, ag:"4+", pa:"6+", av:"10+", sk:["Mighty Blow","Taunt","Thick Skull","Unsteady"], c:"95K"},
+  {n:"0‑1", p:"Troll", types:"Big Guy, Troll", ma:4, st:5, ag:"5+", pa:"5+", av:"10+", sk:["Always Hungry","Loner (4+)","Mighty Blow","Projectile Vomit","Really Stupid","Regeneration","Throw Team-mate"], c:"115K"}
+], note:"Team Captain special rule: nominate a captain for free Pro."},
+"Shambling Undead": {tier:2, league:"Sylvanian Spotlight", rr:70, positionals:[
+  {n:"0‑16", p:"Skeleton Lineman", types:"Human, Lineman, Skeleton, Undead", ma:5, st:3, ag:"4+", pa:"6+", av:"8+", sk:["Regeneration","Thick Skull"], c:"40K"},
+  {n:"0‑16", p:"Zombie Lineman", types:"Human, Lineman, Undead, Zombie", ma:4, st:3, ag:"4+", pa:"6+", av:"9+", sk:["Eye Gouge","Regeneration","Unsteady"], c:"40K"},
+  {n:"0‑2", p:"Ghoul Runner", types:"Ghoul, Runner, Undead", ma:7, st:3, ag:"3+", pa:"3+", av:"8+", sk:["Dodge","Regeneration"], c:"75K"},
+  {n:"0‑2", p:"Wight Blitzer", types:"Blitzer, Human, Skeleton, Undead", ma:6, st:3, ag:"3+", pa:"5+", av:"9+", sk:["Block","Regeneration","Tackle","Thick Skull"], c:"95K"},
+  {n:"0‑2", p:"Mummy", types:"Big Guy, Blocker, Human, Undead", ma:3, st:5, ag:"5+", pa:"6+", av:"10+", sk:["Mighty Blow","Regeneration"], c:"125K"}
+]},
+"Skaven": {tier:2, league:"Underworld Challenge", rr:50, positionals:[
+  {n:"0‑16", p:"Skaven Clanrat", types:"Lineman, Skaven", ma:7, st:3, ag:"3+", pa:"4+", av:"8+", sk:[], c:"50K"},
+  {n:"0‑2", p:"Skaven Thrower", types:"Thrower, Skaven", ma:7, st:3, ag:"3+", pa:"2+", av:"8+", sk:["Pass","Sure Hands"], c:"80K"},
+  {n:"0‑2", p:"Gutter Runner", types:"Runner, Skaven", ma:9, st:2, ag:"2+", pa:"4+", av:"8+", sk:["Dodge","Stab"], c:"85K"},
+  {n:"0‑2", p:"Skaven Blitzer", types:"Blitzer, Skaven", ma:8, st:3, ag:"3+", pa:"4+", av:"9+", sk:["Block","Strip Ball"], c:"90K"},
+  {n:"0‑1", p:"Rat Ogre", types:"Big Guy, Skaven", ma:6, st:5, ag:"4+", pa:"6+", av:"9+", sk:["Animal Savagery","Frenzy","Loner (4+)","Mighty Blow","Prehensile Tail"], c:"150K"}
+]},
+"Snotling": {tier:4, league:"Underworld Challenge", rr:70, positionals:[
+  {n:"0‑16", p:"Snotling Lineman", types:"Lineman, Snotling", ma:5, st:1, ag:"3+", pa:"4+", av:"6+", sk:["Dodge","Insignificant","Right Stuff","Sidestep","Stunty","Titchy"], c:"15K"},
+  {n:"0‑2", p:"Fun-hoppa", types:"Snotling, Special", ma:6, st:1, ag:"3+", pa:"4+", av:"6+", sk:["Dodge","Pogo","Right Stuff","Sidestep","Stunty"], c:"20K"},
+  {n:"0‑2", p:"Stilty Runna", types:"Runner, Snotling", ma:6, st:1, ag:"3+", pa:"4+", av:"6+", sk:["Dodge","Right Stuff","Sidestep","Sprint","Stunty"], c:"20K"},
+  {n:"0‑2", p:"Fungus Flinga", types:"Snotling, Special", ma:5, st:1, ag:"3+", pa:"4+", av:"6+", sk:["Bombardier","Dodge","Right Stuff","Secret Weapon","Sidestep","Stunty","Titchy"], c:"30K"},
+  {n:"0‑2", p:"Pump Wagon", types:"Big Guy, Snotling, Special", ma:5, st:5, ag:"5+", pa:"6+", av:"9+", sk:["Dirty Player","Juggernaut","Mighty Blow","Really Stupid","Stand Firm"], c:"100K"},
+  {n:"0‑2", p:"Trained Troll", types:"Big Guy, Troll", ma:4, st:5, ag:"5+", pa:"5+", av:"10+", sk:["Always Hungry","Mighty Blow","Projectile Vomit","Really Stupid","Regeneration","Throw Team-mate"], c:"115K"}
+], note:"Swarming: may set up an extra D3 Linemen at the start of each drive."},
+"Tomb Kings": {tier:2, league:"Sylvanian Spotlight", rr:60, positionals:[
+  {n:"0‑16", p:"Skeleton Lineman", types:"Human, Lineman, Skeleton, Undead", ma:5, st:3, ag:"4+", pa:"6+", av:"8+", sk:["Regeneration","Thick Skull"], c:"40K"},
+  {n:"0‑2", p:"Tomb Kings Thrower", types:"Human, Skeleton, Thrower, Undead", ma:6, st:3, ag:"4+", pa:"3+", av:"9+", sk:["Pass","Regeneration","Sure Hands","Thick Skull"], c:"65K"},
+  {n:"0‑2", p:"Tomb Kings Blitzer", types:"Blitzer, Human, Skeleton, Undead", ma:6, st:3, ag:"4+", pa:"5+", av:"9+", sk:["Block","Regeneration","Thick Skull"], c:"85K"},
+  {n:"0‑4", p:"Tomb Guardian", types:"Big Guy, Blocker, Human, Undead", ma:4, st:5, ag:"5+", pa:"6+", av:"10+", sk:["Brawler","Decay","Regeneration"], c:"115K"}
+]},
+"Underworld Denizens": {tier:1, league:"Underworld Challenge", rr:70, positionals:[
+  {n:"0‑16", p:"Goblin Lineman", types:"Goblin, Lineman", ma:6, st:2, ag:"3+", pa:"4+", av:"8+", sk:["Dodge","Right Stuff","Stunty"], c:"40K"},
+  {n:"0‑6", p:"Snotling Lineman", types:"Lineman, Snotling", ma:5, st:1, ag:"3+", pa:"4+", av:"6+", sk:["Dodge","Insignificant","Right Stuff","Sidestep","Stunty","Titchy"], c:"15K"},
+  {n:"0‑3", p:"Skaven Clanrat", types:"Lineman, Skaven", ma:7, st:3, ag:"3+", pa:"4+", av:"8+", sk:["Animosity (Goblin)"], c:"50K"},
+  {n:"0‑1", p:"Skaven Thrower", types:"Skaven, Thrower", ma:7, st:3, ag:"3+", pa:"2+", av:"8+", sk:["Animosity (Goblin)","Pass","Sure Hands"], c:"80K"},
+  {n:"0‑1", p:"Gutter Runner", types:"Runner, Skaven", ma:9, st:2, ag:"2+", pa:"4+", av:"8+", sk:["Animosity (Goblin)","Dodge","Stab"], c:"85K"},
+  {n:"0‑1", p:"Skaven Blitzer", types:"Blitzer, Skaven", ma:8, st:3, ag:"3+", pa:"4+", av:"9+", sk:["Animosity (Goblin)","Block","Strip Ball"], c:"90K"},
+  {n:"0‑1*", p:"Troll", types:"Big Guy, Troll", ma:4, st:5, ag:"5+", pa:"5+", av:"10+", sk:["Always Hungry","Loner (4+)","Mighty Blow","Projectile Vomit","Really Stupid","Regeneration","Throw Team-mate"], c:"115K"},
+  {n:"0‑1*", p:"Rat Ogre", types:"Big Guy, Skaven", ma:6, st:5, ag:"4+", pa:"6+", av:"9+", sk:["Animal Savagery","Frenzy","Loner (4+)","Mighty Blow","Prehensile Tail"], c:"150K"}
+], note:"*Team may field only one Big Guy, chosen from these two."},
+"Vampire": {tier:2, league:"Sylvanian Spotlight", rr:60, positionals:[
+  {n:"0‑16", p:"Thrall Lineman", types:"Human, Lineman, Thrall", ma:6, st:3, ag:"3+", pa:"4+", av:"8+", sk:[], c:"40K"},
+  {n:"0‑2", p:"Vampire Runner", types:"Runner, Undead, Vampire", ma:8, st:3, ag:"2+", pa:"3+", av:"8+", sk:["Bloodlust (2+)","Hypnotic Gaze","Regeneration"], c:"100K"},
+  {n:"0‑2", p:"Vampire Thrower", types:"Thrower, Undead, Vampire", ma:6, st:4, ag:"2+", pa:"2+", av:"9+", sk:["Bloodlust (2+)","Hypnotic Gaze","Pass","Regeneration"], c:"110K"},
+  {n:"0‑2", p:"Vampire Blitzer", types:"Blitzer, Undead, Vampire", ma:6, st:4, ag:"2+", pa:"4+", av:"9+", sk:["Bloodlust (3+)","Hypnotic Gaze","Juggernaut","Regeneration"], c:"110K"},
+  {n:"0‑1", p:"Vargheist", types:"Big Guy, Undead, Vampire", ma:5, st:5, ag:"4+", pa:"6+", av:"10+", sk:["Bloodlust (3+)","Claws","Frenzy","Loner (4+)","Regeneration"], c:"150K"}
+]},
+"Wood Elf": {tier:1, league:"Elven Kingdoms League / Woodland League", rr:50, positionals:[
+  {n:"0‑16", p:"Wood Elf Lineman", types:"Lineman, Elf", ma:7, st:3, ag:"2+", pa:"3+", av:"8+", sk:[], c:"65K"},
+  {n:"0‑2", p:"Wood Elf Thrower", types:"Thrower, Elf", ma:7, st:3, ag:"2+", pa:"2+", av:"8+", sk:["Pass","Safe Pair of Hands"], c:"85K"},
+  {n:"0‑2", p:"Wood Elf Catcher", types:"Catcher, Elf", ma:8, st:2, ag:"2+", pa:"3+", av:"8+", sk:["Catch","Dodge","Sprint"], c:"90K"},
+  {n:"0‑2", p:"Wardancer", types:"Blitzer, Elf", ma:8, st:3, ag:"2+", pa:"3+", av:"8+", sk:["Block","Dodge","Leap"], c:"130K"},
+  {n:"0‑1", p:"Loren Forest Treeman", types:"Big Guy, Treeman", ma:2, st:6, ag:"5+", pa:"5+", av:"11+", sk:["Loner (4+)","Mighty Blow","Stand Firm","Strong Arm","Take Root","Thick Skull","Throw Team-mate"], c:"120K"}
+]}
+};
+
+// ---------- STATE ----------
+const notes = {}; // key: teamName|rowIndex -> value
+
+function buildOptions(selectEl, defaultTeam){
+  Object.keys(TEAMS).sort().forEach(name=>{
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    if(name === defaultTeam) opt.selected = true;
+    selectEl.appendChild(opt);
+  });
+}
+
+function renderTeam(name, side){
+  const card = document.getElementById(side === 'a' ? 'cardA' : 'cardB');
+  card.className = 'team-card side-' + side;
+  if(!name || !TEAMS[name]){
+    card.innerHTML = '<div class="empty-state">Select a team</div>';
+    return;
+  }
+  const team = TEAMS[name];
+  let rows = '';
+  team.positionals.forEach((row, i)=>{
+    const key = name + '|' + i;
+    const skillsHtml = row.sk.length
+      ? row.sk.map(s=>`<span class="skill-tag">${s}</span>`).join('')
+      : '<span style="color:#5a7767">—</span>';
+    rows += `
+      <tr>
+        <td class="qty">${row.n}</td>
+        <td class="pos-col">
+          <span class="pos-name">${row.p}</span>
+          <span class="pos-types">${row.types}</span>
+        </td>
+        <td class="stat">${row.ma}</td>
+        <td class="stat">${row.st}</td>
+        <td class="stat">${row.ag}</td>
+        <td class="stat">${row.pa}</td>
+        <td class="stat">${row.av}</td>
+        <td class="skills-col">${skillsHtml}</td>
+        <td class="cost">${row.c}</td>
+        <td class="notes-col">
+          <input type="text" data-key="${key}" placeholder="skills / notes…" value="${notes[key] || ''}">
+        </td>
+      </tr>`;
+  });
+
+  card.innerHTML = `
+    <div class="team-head">
+      <div>
+        <h2>${name}</h2>
+        <div class="meta-row">
+          <span class="chip tier">Tier ${team.tier}</span>
+          <span class="chip">${team.league}</span>
+          <span class="chip">Re-roll ${team.rr}K</span>
+        </div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Qty</th>
+            <th class="pos-col">Position</th>
+            <th>MA</th><th>ST</th><th>AG</th><th>PA</th><th>AV</th>
+            <th class="pos-col">Skills</th>
+            <th>Cost</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    ${team.note ? `<div style="padding:10px 16px;font-size:11.5px;color:var(--text-dim);border-top:1px solid var(--line);">${team.note}</div>` : ''}
+  `;
+
+  card.querySelectorAll('.notes-col input').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      notes[e.target.dataset.key] = e.target.value;
+    });
+  });
+}
+
+const selA = document.getElementById('teamA');
+const selB = document.getElementById('teamB');
+buildOptions(selA, 'Human');
+buildOptions(selB, 'Orc');
+
+selA.addEventListener('change', ()=> renderTeam(selA.value, 'a'));
+selB.addEventListener('change', ()=> renderTeam(selB.value, 'b'));
+
+renderTeam(selA.value, 'a');
+renderTeam(selB.value, 'b');
+</script>
+</body>
+</html>
