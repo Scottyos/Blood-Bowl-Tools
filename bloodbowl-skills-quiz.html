@@ -112,7 +112,7 @@
     text-transform:uppercase; letter-spacing:.5px;
   }
   .card p{
-    font-family:'Special Elite', cursive; font-size:.95rem; line-height:1.5; margin:0;
+    font-family:'IBM Plex Sans', sans-serif; font-size:1rem; line-height:1.55; margin:0; color:#3a2f1c;
   }
   .card .hint{
     margin-top:16px; font-size:.75rem; color:#8a7c55; font-family:'IBM Plex Sans';
@@ -136,8 +136,9 @@
     border:2px solid #b7a878;
   }
   .q-prompt{
-    font-family:'Special Elite', cursive;
+    font-family:'IBM Plex Sans', sans-serif;
     font-size:1rem;
+    font-weight:500;
     line-height:1.55;
     margin-bottom:16px;
   }
@@ -197,7 +198,7 @@
     margin:0 0 4px; font-size:1.25rem; color:var(--blood);
   }
   .guide-card .goal{
-    font-family:'Special Elite',cursive; font-size:.85rem; color:#5a4d33; margin-bottom:12px;
+    font-family:'IBM Plex Sans', sans-serif; font-style:italic; font-size:.88rem; color:#5a4d33; margin-bottom:12px;
   }
   .guide-card ul{ margin:0; padding-left:20px; }
   .guide-card li{ margin-bottom:9px; line-height:1.45; font-size:.92rem; }
@@ -246,18 +247,18 @@ const DATA = [
 {name:"Fend", cat:"General", kind:"Active", desc:"Stops the opposing player from following up into your square after they push you back."},
 {name:"Frenzy", cat:"General", kind:"Active", desc:"Forces you to always follow up after pushing an opponent back, and to throw a second block at the same target if they're still standing."},
 {name:"Kick", cat:"General", kind:"Active", desc:"The kicking player can shave squares off how far the ball scatters at kick-off."},
-{name:"Pro", cat:"General", kind:"Active", desc:"Once a turn, lets you re-roll a single failed die by rolling a 4+ first, without burning a team re-roll."},
-{name:"Steady Footing", cat:"General", kind:"Active", desc:"Re-rolls a failed Dodge, and turns a Stumble result against you into a plain Push Back instead."},
+{name:"Pro", cat:"General", kind:"Active", desc:"Once during your activation, roll a D6 — on a 3+ you may re-roll any one dice, without burning a team re-roll."},
+{name:"Steady Footing", cat:"General", kind:"Active", desc:"Whenever you'd be knocked down or fall over, roll a D6 — on a 6, you simply stay on your feet instead."},
 {name:"Strip Ball", cat:"General", kind:"Active", desc:"Knocks the ball loose from a carrier who's pushed back by your block, even without knocking them down."},
 {name:"Sure Hands", cat:"General", kind:"Active", desc:"Grants a re-roll for picking up the ball and makes it harder for opponents to strip it from you."},
 {name:"Tackle", cat:"General", kind:"Active", desc:"Cancels the Dodge skill (and similar tricks) for opponents you block, making them fall more easily."},
-{name:"Taunt", cat:"General", kind:"Active", desc:"Can force an opposing player to lose their action arguing back instead of doing something useful."},
-{name:"Wrestle", cat:"General", kind:"Active", desc:"Turns a Both Down result into both players simply lying down — no armour roll, no risk of injury from that result."},
+{name:"Taunt", cat:"General", kind:"Active", desc:"If you're pushed back in a block, you can choose to force the attacker to follow up into your vacated square."},
+{name:"Wrestle", cat:"General", kind:"Active", desc:"On a Both Down result, forces both players to hit the deck regardless of Block or other skills either one has."},
 
 // AGILITY
 {name:"Catch", cat:"Agility", kind:"Active", desc:"Grants a re-roll on any failed attempt to catch the ball."},
 {name:"Defensive", cat:"Agility", kind:"Active", desc:"Cancels an opposing player's assist bonus during blocks made against your team-mates near you."},
-{name:"Diving Catch", cat:"Agility", kind:"Active", desc:"Lets you attempt to catch a pass, kick-off, or throw-in landing in your tackle zone, with a bonus to the roll."},
+{name:"Diving Catch", cat:"Agility", kind:"Active", desc:"Lets you attempt to catch a pass, kick-off, or throw-in that lands in your tackle zone (not a bounce), with a +1 bonus if you're the actual pass target."},
 {name:"Diving Tackle", cat:"Agility", kind:"Active", desc:"Lets you throw yourself (going prone) to impose a penalty on a nearby opponent's dodge roll."},
 {name:"Dodge", cat:"Agility", kind:"Elite / Active", desc:"Grants a re-roll when dodging out of a tackle zone, and softens a Stumble result against you into a Push Back."},
 {name:"Hit and Run", cat:"Agility", kind:"Active", desc:"Lets you take a free move after a block, so long as you weren't pushed back yourself."},
@@ -265,31 +266,31 @@ const DATA = [
 {name:"Leap", cat:"Agility", kind:"Active", desc:"Allows jumping over an occupied or dangerous square instead of walking around it, with an Agility test."},
 {name:"Safe Pair of Hands", cat:"Agility", kind:"Active", desc:"Stops the ball bouncing away when you're knocked down while carrying it — it just drops in your square."},
 {name:"Sidestep", cat:"Agility", kind:"Active", desc:"Lets you choose which square you're pushed into, rather than the opponent choosing."},
-{name:"Sprint", cat:"Agility", kind:"Active", desc:"Improves your odds when rushing (going beyond your normal Movement) by adding an extra die and taking the best."},
+{name:"Sprint", cat:"Agility", kind:"Active", desc:"Lets you attempt one additional Rush beyond your normal limit during a Move Action."},
 {name:"Sure Feet", cat:"Agility", kind:"Active", desc:"Grants a re-roll when rushing (going beyond your normal Movement allowance)."},
 
 // PASSING
 {name:"Accurate", cat:"Passing", kind:"Active", desc:"Improves the odds of a short or quick pass landing on target."},
 {name:"Cannoneer", cat:"Passing", kind:"Active", desc:"Boosts the range and reliability of your longest, hardest throws."},
-{name:"Cloud Burster", cat:"Passing", kind:"Active", desc:"Makes throws that would otherwise sail wildly less likely to go badly wrong."},
+{name:"Cloud Burster", cat:"Passing", kind:"Active", desc:"When you throw a pass, opponents cannot attempt to intercept it at all."},
 {name:"Dump-off", cat:"Passing", kind:"Active", desc:"Lets you throw the ball away for free the instant you're about to be blocked, before the block is even resolved."},
-{name:"Give and Go", cat:"Passing", kind:"Active", desc:"Lets you make a short move after completing a successful pass."},
-{name:"Hail Mary Pass", cat:"Passing", kind:"Active", desc:"Allows a desperate throw anywhere on the pitch with no range limit, though accuracy suffers."},
+{name:"Give and Go", cat:"Passing", kind:"Active", desc:"Lets you make a short move after completing a successful pass or hand-off."},
+{name:"Hail Mary Pass", cat:"Passing", kind:"Active", desc:"Allows a desperate throw anywhere on the pitch with no range limit, though it can never land as accurate and can't be intercepted."},
 {name:"Leader", cat:"Passing", kind:"Passive", desc:"Grants your team an extra team re-roll for as long as this player is on the pitch."},
-{name:"Nerves of Steel", cat:"Passing", kind:"Active", desc:"Ignores penalties from being marked when throwing, handing off, or catching."},
-{name:"On the Ball", cat:"Passing", kind:"Active", desc:"Lets you move toward a loose ball as soon as it's kicked, before the receiving team's turn even starts."},
+{name:"Nerves of Steel", cat:"Passing", kind:"Active", desc:"Ignores penalties from being marked when throwing or catching."},
+{name:"On the Ball", cat:"Passing", kind:"Active", desc:"Lets you dash up to 3 squares when an opponent declares a pass at a target, or toward the ball right after a kick-off before the Kick-off Event is rolled."},
 {name:"Pass", cat:"Passing", kind:"Active", desc:"Grants a re-roll on a failed passing attempt."},
-{name:"Punt", cat:"Passing", kind:"Active", desc:"Improves how a kick-off can be aimed and controlled."},
-{name:"Safe Pass", cat:"Passing", kind:"Active", desc:"Stops a fumbled pass from causing a turnover — it just falls incomplete instead."},
+{name:"Punt", cat:"Passing", kind:"Active", desc:"Lets you move, then punt the ball downfield in a chosen direction as a special action — separate from the opening kick-off."},
+{name:"Safe Pass", cat:"Passing", kind:"Active", desc:"Turns a fumbled pass (rolling a natural 1) into no turnover at all — you just keep the ball and your activation ends."},
 
 // STRENGTH
-{name:"Arm Bar", cat:"Strength", kind:"Active", desc:"Boosts the injury roll against an opponent you've pushed back into a crowd or hazard."},
+{name:"Arm Bar", cat:"Strength", kind:"Active", desc:"If an opponent falls over failing to Dodge, Leap, or Jump out of your tackle zone, add a bonus to their armour or injury roll."},
 {name:"Brawler", cat:"Strength", kind:"Active", desc:"Turns a Both Down result from a block into a win for you when there's no assist either way."},
 {name:"Break Tackle", cat:"Strength", kind:"Active", desc:"Boosts your Strength for a single dodge roll, making it easier to slip away from strong markers."},
 {name:"Bullseye", cat:"Strength", kind:"Active", desc:"Improves accuracy when throwing a team-mate at a specific target."},
 {name:"Grab", cat:"Strength", kind:"Active", desc:"Lets you choose which square an opponent is pushed into after a block."},
 {name:"Guard", cat:"Strength", kind:"Elite / Active", desc:"Keeps assisting a team-mate's block or defense even when you'd normally be too outnumbered to help."},
-{name:"Juggernaut", cat:"Strength", kind:"Active", desc:"Turns a Stumble result into a Push Back when blitzing, and ignores certain block-based skills used against you."},
+{name:"Juggernaut", cat:"Strength", kind:"Active", desc:"During a Blitz, turns a Both Down result into a Push Back, and ignores Fend, Stand Firm, and Wrestle used against you."},
 {name:"Mighty Blow", cat:"Strength", kind:"Elite / Active", desc:"Adds a bonus to the armour or injury roll after knocking someone down in a block."},
 {name:"Multiple Block", cat:"Strength", kind:"Active", desc:"Lets you throw a block at two adjacent opponents at once in a single action."},
 {name:"Stand Firm", cat:"Strength", kind:"Active", desc:"Lets you choose to not be pushed back by a block at all."},
@@ -298,27 +299,27 @@ const DATA = [
 
 // DEVIOUS
 {name:"Dirty Player", cat:"Devious", kind:"Active", desc:"Adds a bonus to the armour or injury roll specifically when fouling."},
-{name:"Eye Gouge", cat:"Devious", kind:"Active", desc:"Boosts a foul's injury roll further, at extra risk of being sent off if caught."},
+{name:"Eye Gouge", cat:"Devious", kind:"Active", desc:"An opponent you push back with a block can't offer or receive assists until after their next activation."},
 {name:"Fumblerooski", cat:"Devious", kind:"Active", desc:"Lets you leave the ball behind on the ground as you move, instead of carrying it further."},
-{name:"Lethal Flight", cat:"Devious", kind:"Active", desc:"Adds a bonus to injury when a team-mate you've thrown lands on and flattens an opponent."},
+{name:"Lethal Flight", cat:"Devious", kind:"Active", desc:"Adds a bonus to injury when a team-mate you've thrown lands on and flattens an opponent — and you get credit for the casualty."},
 {name:"Lone Fouler", cat:"Devious", kind:"Active", desc:"Grants a re-roll on a foul's armour roll when fouling without any assists."},
 {name:"Pile Driver", cat:"Devious", kind:"Active", desc:"Lets you follow up a successful knockdown block with an automatic free foul on the same opponent."},
-{name:"Put the Boot In", cat:"Devious", kind:"Active", desc:"Lets you deliver a stomp on a prone opponent adjacent to you as a special action."},
-{name:"Quick Foul", cat:"Devious", kind:"Active", desc:"Lowers the risk of being caught and sent off when fouling."},
+{name:"Put the Boot In", cat:"Devious", kind:"Active", desc:"Lets you provide an assist on a team-mate's foul no matter how many opponents are marking you."},
+{name:"Quick Foul", cat:"Devious", kind:"Active", desc:"Your activation doesn't end after fouling — you can still use any movement you have left."},
 {name:"Saboteur", cat:"Devious", kind:"Passive", desc:"Can trigger a hidden weapon against whoever knocks you down, at the risk of harming yourself too."},
 {name:"Shadowing", cat:"Devious", kind:"Active", desc:"Lets you try to stick to an opponent's heels as they try to dodge away from you."},
 {name:"Sneaky Git", cat:"Devious", kind:"Active", desc:"Protects you from being sent off on a natural double when fouling, unless the target's armour actually breaks."},
 {name:"Violent Innovator", cat:"Devious", kind:"Active", desc:"Earns you credit toward star player points when a special action of yours causes a casualty."},
 
 // MUTATIONS
-{name:"Big Hand", cat:"Mutations", kind:"Active", desc:"Ignores penalties for picking up the ball in heavy rain or other tricky conditions."},
+{name:"Big Hand", cat:"Mutations", kind:"Active", desc:"Ignores all negative modifiers when attempting to pick up the ball, weather included."},
 {name:"Claws", cat:"Mutations", kind:"Passive", desc:"Ignores an opponent's armour bonus, making it easier to injure well-armoured players."},
 {name:"Disturbing Presence", cat:"Mutations", kind:"Passive", desc:"Imposes a penalty on opposing passes and catches attempted near you."},
 {name:"Extra Arms", cat:"Mutations", kind:"Active", desc:"Improves the odds of catching, intercepting, or picking up the ball."},
 {name:"Foul Appearance", cat:"Mutations", kind:"Passive", desc:"Can cause opponents to flinch and waste their block action against you entirely."},
 {name:"Horns", cat:"Mutations", kind:"Active", desc:"Adds a bonus to Strength specifically when blitzing."},
 {name:"Iron Hard Skin", cat:"Mutations", kind:"Passive", desc:"Reduces the effectiveness of skills like Claws being used against your armour."},
-{name:"Monstrous Mouth", cat:"Mutations", kind:"Active", desc:"Improves catching rolls and softens the risk of a fumbled catch."},
+{name:"Monstrous Mouth", cat:"Mutations", kind:"Active", desc:"Lets you 'Chomp' a marked standing opponent as a special action, trapping them in their square while you keep marking them."},
 {name:"Prehensile Tail", cat:"Mutations", kind:"Active", desc:"Imposes a penalty on opponents trying to dodge away from you."},
 {name:"Tentacles", cat:"Mutations", kind:"Active", desc:"Can grapple an adjacent opponent trying to dodge away, contested by a Strength roll-off."},
 {name:"Two Heads", cat:"Mutations", kind:"Active", desc:"Grants a bonus when attempting to dodge out of a tackle zone."},
@@ -326,41 +327,41 @@ const DATA = [
 
 // TRAITS
 {name:"Always Hungry", cat:"Traits", kind:"Active", desc:"Risks eating the team-mate you're trying to throw, instead of completing the throw."},
-{name:"Animal Savagery", cat:"Traits", kind:"Passive", desc:"Forces a roll before this player can safely block a team-mate, or they may attack them instead."},
-{name:"Animosity (X)", cat:"Traits", kind:"Active", desc:"Requires a roll before this player will hand the ball off or assist certain team-mates of a specific type."},
+{name:"Animal Savagery", cat:"Traits", kind:"Passive", desc:"Rolls before every activation; on a fail, this player lashes out and knocks down an adjacent team-mate instead of acting."},
+{name:"Animosity (X)", cat:"Traits", kind:"Active", desc:"Requires a roll before this player will hand the ball off or pass to certain team-mates of a specific type."},
 {name:"Ball and Chain", cat:"Traits", kind:"Active", desc:"Moves in a random direction each activation, smashing through anyone in the way, but can't be directly controlled."},
-{name:"Bloodlust (X+)", cat:"Traits", kind:"Passive", desc:"Forces this player to bite a nearby team-mate for blood or suffer themselves, each turn."},
+{name:"Bloodlust (X+)", cat:"Traits", kind:"Passive", desc:"Forces this player to bite a nearby Thrall team-mate for blood or suffer themselves, each turn."},
 {name:"Bombardier", cat:"Traits", kind:"Active", desc:"Lets this player throw a bomb at a target square as a special action."},
-{name:"Bone Head", cat:"Traits", kind:"Passive", desc:"Requires a roll before activating; on a fail, the player is too dim to do anything that turn."},
-{name:"Breathe Fire", cat:"Traits", kind:"Active", desc:"Lets this player torch an adjacent square, potentially injuring whoever's standing there."},
+{name:"Bone Head", cat:"Traits", kind:"Passive", desc:"Rolls before activating; on a fail, the player becomes Distracted and can't perform the declared action."},
+{name:"Breathe Fire", cat:"Traits", kind:"Active", desc:"Lets this player torch a marked adjacent opponent, potentially knocking them down or prone."},
 {name:"Chainsaw", cat:"Traits", kind:"Active", desc:"Lets this player attack with a chainsaw instead of a normal block, with its own randomness and risks."},
-{name:"Decay", cat:"Traits", kind:"Passive", desc:"Lets this player shrug off the first serious injury result of a game as something less severe."},
-{name:"Drunkard", cat:"Traits", kind:"Active", desc:"Requires a roll to reduce a Bone-Head-style failure, in exchange for a drink first."},
-{name:"Hatred (X)", cat:"Traits", kind:"Active", desc:"Grants extra dice or bonuses when blocking specific hated opponent types."},
-{name:"Hypnotic Gaze", cat:"Traits", kind:"Active", desc:"Can freeze a nearby standing opponent in place, stopping them from assisting."},
-{name:"Insignificant", cat:"Traits", kind:"Passive", desc:"Makes it harder for this player to contribute an assist to a team-mate's block."},
-{name:"Kick Team-mate", cat:"Traits", kind:"Active", desc:"Lets a player boot a team-mate with the Right Stuff trait down the pitch as a special action."},
+{name:"Decay", cat:"Traits", kind:"Passive", desc:"A downside, not a bonus — adds +1 to any casualty roll made against this player, making injuries worse."},
+{name:"Drunkard", cat:"Traits", kind:"Passive", desc:"Applies a -1 penalty whenever this player attempts to Rush."},
+{name:"Hatred (X)", cat:"Traits", kind:"Passive", desc:"Lets you re-roll a single Player Down result when blocking opponents of a specific hated type."},
+{name:"Hypnotic Gaze", cat:"Traits", kind:"Active", desc:"Can freeze a nearby standing opponent in place, making them Distracted."},
+{name:"Insignificant", cat:"Traits", kind:"Passive", desc:"A roster-building limit — you can't draft more players with this trait than players without it."},
+{name:"Kick Team-mate", cat:"Traits", kind:"Passive", desc:"Lets a player boot a team-mate with the Right Stuff trait down the pitch as a special action, separate from a normal throw."},
 {name:"Loner (X+)", cat:"Traits", kind:"Passive", desc:"Requires a roll before this player may benefit from a team re-roll at all."},
-{name:"My Ball", cat:"Traits", kind:"Passive", desc:"Reflects a player who always keeps hold of a bomb or similar object rather than passing it on."},
+{name:"My Ball", cat:"Traits", kind:"Passive", desc:"This player can never willingly give up the ball — no passing or handing it off while they hold it."},
 {name:"No Ball", cat:"Traits", kind:"Passive", desc:"Marks a player who simply cannot handle the ball in any way."},
-{name:"Pick-me-up", cat:"Traits", kind:"Active", desc:"Lets a team-mate help a Ball-and-Chain-style player back onto their feet."},
-{name:"Plague Ridden", cat:"Traits", kind:"Passive", desc:"Can spread a nasty effect to an opponent this player knocks down in a block."},
-{name:"Pogo Stick", cat:"Traits", kind:"Active", desc:"Lets this player bounce over obstacles in a distinctive, unpredictable way."},
+{name:"Pick-me-up", cat:"Traits", kind:"Active", desc:"At the end of the opponent's turn, gives any prone team-mate within 3 squares a chance to stand back up for free."},
+{name:"Plague Ridden", cat:"Traits", kind:"Passive", desc:"Once per game, if this player causes an opponent's death, you may add a fresh lineman to your Reserves for the rest of the game."},
+{name:"Pogo", cat:"Traits", kind:"Active", desc:"Lets this player jump over an adjacent square like a Leap, ignoring all the usual negative modifiers."},
 {name:"Projectile Vomit", cat:"Traits", kind:"Active", desc:"Lets this player launch an unpleasant ranged attack instead of a normal action."},
 {name:"Really Stupid", cat:"Traits", kind:"Passive", desc:"Requires a roll (helped by a nearby team-mate) before this player can act at all."},
 {name:"Regeneration", cat:"Traits", kind:"Passive", desc:"Gives a second chance to shrug off a serious casualty result on the injury table."},
 {name:"Right Stuff", cat:"Traits", kind:"Passive", desc:"Marks a player small and light enough to be thrown by a team-mate."},
-{name:"Secret Weapon", cat:"Traits", kind:"Passive", desc:"Marks a dangerous illegal weapon-user who is always sent off after using their action, regardless of outcome."},
-{name:"Stab", cat:"Traits", kind:"Active", desc:"Lets this player make a stabbing attack instead of a normal block, skipping the usual armour roll."},
-{name:"Stunty", cat:"Traits", kind:"Passive", desc:"Marks a small player who's easier to knock down but harder for others to catch mid-throw."},
-{name:"Swoop", cat:"Traits", kind:"Passive", desc:"Lets a flying player land safely and normally when thrown or otherwise put in the air."},
+{name:"Secret Weapon", cat:"Traits", kind:"Passive", desc:"This player is automatically sent off for fouling at the end of any drive they took part in."},
+{name:"Stab", cat:"Traits", kind:"Active", desc:"Lets this player make an unmodified armour-roll stabbing attack against a marked standing opponent as a special action."},
+{name:"Stunty", cat:"Traits", kind:"Passive", desc:"Ignores the usual penalty for being marked when dodging, but is worse at intercepting and rolls on the harsher Stunty injury table."},
+{name:"Swoop", cat:"Traits", kind:"Active", desc:"Lets a thrown player skip the normal scatter and pick a direct line of travel instead, with a re-roll on the landing roll."},
 {name:"Take Root", cat:"Traits", kind:"Passive", desc:"Risks rooting this player to the spot at the end of a move, unable to act further that turn."},
-{name:"Throw Team-mate", cat:"Traits", kind:"Passive", desc:"Marks a player strong and reliable enough to hurl a Right-Stuff team-mate down the field."},
-{name:"Timmm-ber!", cat:"Traits", kind:"Passive", desc:"Lets team-mates help a very tall player who's fallen back onto their feet more easily."},
-{name:"Titchy", cat:"Traits", kind:"Passive", desc:"Marks a tiny player who's extra hard to hit with a block but easy to push around."},
-{name:"Trickster", cat:"Traits", kind:"Active", desc:"Lets this player attempt a sly, rules-bending special action unique to their position."},
-{name:"Unchannelled Fury", cat:"Traits", kind:"Passive", desc:"Requires a roll before this player will actually go along with a team-mate's block assist."},
-{name:"Unsteady", cat:"Traits", kind:"Passive", desc:"Makes this player noticeably easier to push back or knock down than normal."}
+{name:"Throw Team-mate", cat:"Traits", kind:"Active", desc:"Grants the ability to declare a Throw Team-mate Action, hurling a Right Stuff team-mate down the field."},
+{name:"Timmm-ber!", cat:"Traits", kind:"Passive", desc:"A slow, low-Movement player gets help standing up from each adjacent open standing team-mate."},
+{name:"Titchy", cat:"Traits", kind:"Passive", desc:"Gets a +1 bonus to dodge rolls, but its tackle zone is too weak to impose the usual penalty on opponents dodging away."},
+{name:"Trickster", cat:"Traits", kind:"Active", desc:"Lets this player teleport to an adjacent empty square just before an opponent's block or targeted special action is resolved against them."},
+{name:"Unchannelled Fury", cat:"Traits", kind:"Passive", desc:"Rolls before every activation; on a fail, this player rages incoherently and their activation immediately ends."},
+{name:"Unsteady", cat:"Traits", kind:"Passive", desc:"This player is not allowed to declare Secure the Ball Actions."}
 ];
 
 const GUIDES = [
