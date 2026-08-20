@@ -20,8 +20,10 @@
 
 body{
     font-family:Roboto,sans-serif;
+
     background:
         radial-gradient(circle at top,#24354e 0%,#111722 45%,#0a0f16 100%);
+
     color:#EEE;
     min-height:100vh;
 }
@@ -36,7 +38,9 @@ header h1{
     font-size:3rem;
     color:#d7b14d;
     letter-spacing:3px;
-    text-shadow:0 0 8px rgba(0,0,0,.8);
+
+    text-shadow:
+        0 0 8px rgba(0,0,0,.8);
 }
 
 header h2{
@@ -49,6 +53,7 @@ header h2{
     width:140px;
     height:3px;
     margin:25px auto;
+
     background:#991b1b;
     border-radius:3px;
 }
@@ -69,38 +74,33 @@ header h2{
     display:flex;
     flex-direction:column;
     justify-content:space-between;
+
     text-decoration:none;
     color:white;
+
     background:#1a2432;
+
     border:2px solid #425366;
     border-radius:16px;
+
     padding:28px;
+
     min-height:240px;
+
     transition:.25s;
-    box-shadow:0 12px 25px rgba(0,0,0,.35);
+
+    box-shadow:
+        0 12px 25px rgba(0,0,0,.35);
 }
 
 .card:hover{
     transform:translateY(-8px);
+
     border-color:#b51c1c;
+
     box-shadow:
         0 18px 35px rgba(0,0,0,.55),
         0 0 18px rgba(181,28,28,.4);
-}
-
-.coming-soon{
-    opacity:.75;
-    cursor:default;
-}
-
-.coming-soon:hover{
-    transform:none;
-    border-color:#425366;
-    box-shadow:0 12px 25px rgba(0,0,0,.35);
-}
-
-.coming-soon .launch{
-    color:#999;
 }
 
 .icon{
@@ -109,35 +109,110 @@ header h2{
 
 .card h3{
     margin-top:18px;
+
     font-family:'Cinzel',serif;
+
     color:#d8b95a;
+
     font-size:1.4rem;
 }
 
 .card p{
     margin-top:15px;
+
     line-height:1.6;
+
     color:#c3ccd8;
+
     flex-grow:1;
 }
 
 .launch{
     margin-top:25px;
+
     color:#d8b95a;
+
     font-weight:bold;
+
     letter-spacing:1px;
 }
 
+
+/* =========================
+   COMING SOON CARD
+   ========================= */
+
+.coming-soon{
+    opacity:.75;
+    cursor:default;
+}
+
+.coming-soon:hover{
+    transform:none;
+
+    border-color:#425366;
+
+    box-shadow:
+        0 12px 25px rgba(0,0,0,.35);
+}
+
+.coming-soon .launch{
+    color:#999;
+}
+
+
+/* =========================
+   FOOTER
+   ========================= */
+
 footer{
     margin-top:70px;
+
     padding:40px;
+
     text-align:center;
+
     color:#9ea8b5;
+
     font-style:italic;
 }
 
 footer span{
     color:#d8b95a;
+}
+
+
+/* =========================
+   MOBILE
+   ========================= */
+
+@media (max-width:600px){
+
+    header{
+        padding:45px 20px 25px;
+    }
+
+    header h1{
+        font-size:2.2rem;
+    }
+
+    header h2{
+        font-size:1rem;
+    }
+
+    .container{
+        padding:20px;
+    }
+
+    .grid{
+        gap:20px;
+    }
+
+    .card{
+        min-height:220px;
+        padding:24px;
+    }
+
 }
 
 </style>
@@ -146,136 +221,219 @@ footer span{
 
 <body>
 
+
+<!-- =========================
+     HEADER
+     ========================= -->
+
 <header>
 
-<h1>Scottyos Coach's Resources</h1>
+    <h1>Scottyos Coach's Resources</h1>
 
-<div class="divider"></div>
+    <div class="divider"></div>
 
-<h2>Interactive Training Tools for Blood Bowl Coaches</h2>
+    <h2>
+        Interactive Training Tools for Blood Bowl Coaches
+    </h2>
 
 </header>
+
+
+<!-- =========================
+     TOOL CARDS
+     ========================= -->
 
 <div class="container">
 
 <div class="grid">
 
-<a class="card" href="https://scottyos.github.io/Blood-Bowl-Tools/block-dice-trainer.html">
 
-<div class="icon">🎲</div>
+    <!-- BLOCK DICE TRAINER -->
 
-<h3>Block Dice Trainer</h3>
+    <a
+        class="card"
+        href="https://scottyos.github.io/Blood-Bowl-Tools/block-dice-trainer.html"
+    >
 
-<p>
-Memorize every block result until reading the dice becomes second nature.
-Practice attacking, defending, and choosing the best outcome instinctively.
-</p>
+        <div class="icon">🎲</div>
 
-<div class="launch">
-Launch Tool →
-</div>
+        <h3>Block Dice Trainer</h3>
 
-</a>
+        <p>
+            Memorize every block result until reading the dice becomes
+            second nature. Practice attacking, defending, and choosing
+            the best outcome instinctively.
+        </p>
 
-<a class="card" href="https://scottyos.github.io/Blood-Bowl-Tools/bloodbowl-skills-quiz.html">
+        <div class="launch">
+            Launch Tool →
+        </div>
 
-<div class="icon">📖</div>
+    </a>
 
-<h3>Skills Quiz</h3>
 
-<p>
-Test your knowledge of every Blood Bowl skill.
-Perfect for learning new editions or brushing up before league play.
-</p>
+    <!-- SKILLS QUIZ -->
 
-<div class="launch">
-Launch Tool →
-</div>
+    <a
+        class="card"
+        href="https://scottyos.github.io/Blood-Bowl-Tools/bloodbowl-skills-quiz.html"
+    >
 
-</a>
+        <div class="icon">📖</div>
 
-<a class="card" href="https://scottyos.github.io/Blood-Bowl-Tools/blood-bowl-odds-caller.html">
+        <h3>Skills Quiz</h3>
 
-<div class="icon">📊</div>
+        <p>
+            Test your knowledge of every Blood Bowl skill.
+            Perfect for learning new editions or brushing up
+            before league play.
+        </p>
 
-<h3>Odds Caller</h3>
+        <div class="launch">
+            Launch Tool →
+        </div>
 
-<p>
-Practice evaluating the probability of common Blood Bowl actions.
-Build better instincts for when to push your luck and when to play it safe.
-</p>
+    </a>
 
-<div class="launch">
-Launch Tool →
-</div>
 
-</a>
+    <!-- ODDS CALLER -->
 
-<a class="card" href="https://scottyos.github.io/Blood-Bowl-Tools/bloodbowl-team-comparator.html">
+    <a
+        class="card"
+        href="https://scottyos.github.io/Blood-Bowl-Tools/blood-bowl-odds-caller.html"
+    >
 
-    <div class="icon">⚖️</div>
+        <div class="icon">📊</div>
 
-    <h3>Team Comparator</h3>
+        <h3>Odds Caller</h3>
 
-    <p>
-        Compare Blood Bowl teams side-by-side. Review strengths,
-        weaknesses, player profiles, and key characteristics to help
-        choose your next team or prepare for your next opponent.
-    </p>
+        <p>
+            Practice evaluating the probability of common Blood Bowl
+            actions. Build better instincts for when to push your luck
+            and when to play it safe.
+        </p>
 
-    <div class="launch">
-        Launch Tool →
+        <div class="launch">
+            Launch Tool →
+        </div>
+
+    </a>
+
+
+    <!-- TURN CLOCK -->
+
+    <a
+        class="card"
+        href="https://scottyos.github.io/Blood-Bowl-Tools/bloodbowl-turn-clock.html"
+    >
+
+        <div class="icon">⏱️</div>
+
+        <h3>Turn Clock</h3>
+
+        <p>
+            Train yourself to make confident decisions under time
+            pressure. Develop tournament-ready pacing and reduce
+            analysis paralysis.
+        </p>
+
+        <div class="launch">
+            Launch Tool →
+        </div>
+
+    </a>
+
+
+    <!-- TEAM COMPARATOR -->
+
+    <a
+        class="card"
+        href="https://scottyos.github.io/Blood-Bowl-Tools/bloodbowl-team-comparator.html"
+    >
+
+        <div class="icon">⚔️</div>
+
+        <h3>Team Comparator</h3>
+
+        <p>
+            Compare Blood Bowl teams side by side and explore their
+            strengths, weaknesses, and key differences before taking
+            your team onto the pitch.
+        </p>
+
+        <div class="launch">
+            Launch Tool →
+        </div>
+
+    </a>
+
+
+    <!-- ARMOUR & INJURY ODDS -->
+
+    <a
+        class="card"
+        href="https://scottyos.github.io/Blood-Bowl-Tools/bb-injury-calc.html"
+    >
+
+        <div class="icon">💥</div>
+
+        <h3>Armour & Injury Odds</h3>
+
+        <p>
+            Explore the odds of breaking armour and causing different
+            injury results. See how block dice, armour values, and
+            injury rolls affect the outcome.
+        </p>
+
+        <div class="launch">
+            Launch Tool →
+        </div>
+
+    </a>
+
+
+    <!-- CHAIN PUSH / SURF TRAINER -->
+
+    <div class="card coming-soon">
+
+        <div class="icon">↔️</div>
+
+        <h3>Chain Push Trainer</h3>
+
+        <p>
+            Master one of Blood Bowl's most powerful positioning
+            mechanics. Learn crowd pushes, surfing setups, and
+            advanced chain push sequences.
+        </p>
+
+        <div class="launch">
+            Coming Soon
+        </div>
+
     </div>
 
-</a>
-
-<a class="card" href="https://scottyos.github.io/Blood-Bowl-Tools/bloodbowl-turn-clock.html">
-
-<div class="icon">⏱️</div>
-
-<h3>Turn Clock</h3>
-
-<p>
-Train yourself to make confident decisions under time pressure.
-Develop tournament-ready pacing and reduce analysis paralysis.
-</p>
-
-<div class="launch">
-Launch Tool →
-</div>
-
-</a>
-
-<div class="card coming-soon">
-
-<div class="icon">↔️</div>
-
-<h3>Chain Push Trainer</h3>
-
-<p>
-Master one of Blood Bowl's most powerful positioning mechanics.
-Learn crowd pushes, surfing setups, and advanced chain push sequences.
-</p>
-
-<div class="launch">
-Coming Soon
-</div>
 
 </div>
 
 </div>
 
-</div>
+
+<!-- =========================
+     FOOTER
+     ========================= -->
 
 <footer>
 
-<span>"Nuffle Favours the Prepared."</span>
+    <span>
+        "Nuffle Favours the Prepared."
+    </span>
 
-<br><br>
+    <br><br>
 
-Scottyos Coach's Resources
+    Scottyos Coach's Resources
 
 </footer>
+
 
 </body>
 </html>
