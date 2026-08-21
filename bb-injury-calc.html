@@ -163,6 +163,29 @@
     cursor:pointer;
   }
 
+  .assistrow{
+    display:flex;
+    gap:12px;
+  }
+  .assistfield{flex:1;}
+  .assistfield label{
+    display:block;
+    font-size:11px;
+    color:var(--parchment-dim);
+    margin-bottom:4px;
+  }
+  .assistfield input[type="number"]{
+    width:100%;
+    background:var(--pitch-1);
+    border:1px solid var(--line-dim);
+    color:var(--parchment);
+    padding:8px 10px;
+    border-radius:6px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14px;
+  }
+  .assistfield input[type="number"]:focus{outline:2px solid var(--line);outline-offset:1px;}
+
   hr.div{
     border:none;
     border-top:1px dashed var(--line-dim);
@@ -295,6 +318,20 @@
       </div>
 
       <div class="skillgroup">
+        <div class="glabel">Assists on the Armour Roll</div>
+        <div class="assistrow">
+          <div class="assistfield">
+            <label for="foul-offassist">Offensive (+1 ea)</label>
+            <input type="number" id="foul-offassist" min="0" max="6" value="0" step="1">
+          </div>
+          <div class="assistfield">
+            <label for="foul-defassist">Defensive (−1 ea)</label>
+            <input type="number" id="foul-defassist" min="0" max="6" value="0" step="1">
+          </div>
+        </div>
+      </div>
+
+      <div class="skillgroup">
         <div class="glabel">Defender mitigation</div>
         <div class="skillrow">
           <label class="chk"><input type="checkbox" id="foul-thickskull"> Thick Skull</label>
@@ -337,12 +374,14 @@
 
   // Single attempt at an armour roll of value r: does it break, and how
   // much of the flat +1 bonus pool (Mighty Blow / Dirty Player) does it eat?
-  function armorAttempt(r, av, bonusCount, claws){
-    const naturalBreak = (r >= av) || (claws && r >= 8);
+  // assistMod is a mandatory modifier (+1/offensive assist, -1/defensive assist on fouls).
+  function armorAttempt(r, av, bonusCount, claws, assistMod){
+    const effR = r + assistMod;
+    const naturalBreak = (effR >= av) || (claws && effR >= 8);
     if (naturalBreak) return {broken:true, bonusUsed:0};
     if (bonusCount > 0){
       for (let b = 1; b <= bonusCount; b++){
-        const rTest = r + b;
+        const rTest = effR + b;
         if (rTest >= av || (claws && rTest >= 8)){
           return {broken:true, bonusUsed:b};
         }
@@ -353,7 +392,7 @@
 
   // Returns {noBreak, stun, ko, cas} as fractions summing to 1,
   // plus usage stats for the note. loneFouler rerolls a failed armour roll once.
-  function compute(av, thickSkull, bonusCount, claws, loneFouler){
+  function compute(av, thickSkull, bonusCount, claws, loneFouler, assistMod){
     const out = {noBreak:0, stun:0, ko:0, cas:0};
     let armorSavesCount = 0; // fraction of dice where a bonus was needed on armour
     let breakFrac = 0;
@@ -376,13 +415,13 @@
 
     for (const [r, rCount] of DIST){
       const pr = rCount / TOTAL;
-      const attempt = armorAttempt(r, av, bonusCount, claws);
+      const attempt = armorAttempt(r, av, bonusCount, claws, assistMod);
 
       if (!attempt.broken && loneFouler){
         // Reroll the failed armour roll once, from scratch.
         for (const [r2, rCount2] of DIST){
           const pr2 = rCount2 / TOTAL;
-          const attempt2 = armorAttempt(r2, av, bonusCount, claws);
+          const attempt2 = armorAttempt(r2, av, bonusCount, claws, assistMod);
           applyOutcome(attempt2, pr * pr2);
         }
       } else {
@@ -400,18 +439,24 @@
     const thickSkull = document.getElementById(prefix+'-thickskull').checked;
     const av = parseInt(avSel.value, 10);
 
-    let bonusCount = 0, claws = false, loneFouler = false;
+    let bonusCount = 0, claws = false, loneFouler = false, assistMod = 0;
+    let offAssist = 0, defAssist = 0, loneFoulerChecked = false;
     if (mode === 'block'){
       const mightyBlow = document.getElementById(prefix+'-mb').checked;
       claws = document.getElementById(prefix+'-claws').checked;
       bonusCount = mightyBlow ? 1 : 0;
     } else {
       const dirtyPlayer = document.getElementById(prefix+'-dp').checked;
-      loneFouler = document.getElementById(prefix+'-lonefouler').checked;
+      loneFoulerChecked = document.getElementById(prefix+'-lonefouler').checked;
       bonusCount = dirtyPlayer ? 1 : 0;
+      offAssist = parseInt(document.getElementById(prefix+'-offassist').value, 10) || 0;
+      defAssist = parseInt(document.getElementById(prefix+'-defassist').value, 10) || 0;
+      assistMod = offAssist - defAssist;
+      // Lone Fouler only rerolls when there are no assists either way.
+      loneFouler = loneFoulerChecked && offAssist === 0 && defAssist === 0;
     }
 
-    const {out, armorSavesFrac, breakFrac, bonusCount: usedBonus} = compute(av, thickSkull, bonusCount, claws, loneFouler);
+    const {out, armorSavesFrac, breakFrac, bonusCount: usedBonus} = compute(av, thickSkull, bonusCount, claws, loneFouler, assistMod);
 
     const resultsEl = document.getElementById(prefix+'-results');
     resultsEl.innerHTML = `
@@ -437,8 +482,14 @@
     } else if (mode === 'block' && claws){
       notes.push(`<b>Claws</b> also breaks armour outright on any natural 8+, regardless of AV ${av}.`);
     }
-    if (mode === 'foul' && loneFouler){
-      notes.push(`<b>Lone Fouler:</b> a failed Armour roll is rerolled once (assumes no offensive/defensive assists).`);
+    if (mode === 'foul' && (offAssist > 0 || defAssist > 0)){
+      const sign = assistMod > 0 ? '+' : '';
+      notes.push(`<b>Assists:</b> ${offAssist} offensive, ${defAssist} defensive → ${sign}${assistMod} to the Armour roll.`);
+    }
+    if (mode === 'foul' && loneFoulerChecked && !loneFouler){
+      notes.push(`<b>Lone Fouler</b> only rerolls a failed Armour roll when there are no assists either way — not applying it here.`);
+    } else if (mode === 'foul' && loneFouler){
+      notes.push(`<b>Lone Fouler:</b> a failed Armour roll is rerolled once.`);
     }
     if (notes.length === 0){
       notes.push(`Target Armour Value ${av}. Needs a 2D6 roll of ${av}+ to break armour before any skills apply.`);
@@ -469,9 +520,11 @@
   function wireCard(prefix, mode){
     const ids = mode === 'block'
       ? [prefix+'-av', prefix+'-thickskull', prefix+'-mb', prefix+'-claws']
-      : [prefix+'-av', prefix+'-thickskull', prefix+'-dp', prefix+'-lonefouler'];
+      : [prefix+'-av', prefix+'-thickskull', prefix+'-dp', prefix+'-lonefouler', prefix+'-offassist', prefix+'-defassist'];
     ids.forEach(id => {
-      document.getElementById(id).addEventListener('change', () => renderCard(prefix, mode));
+      const el = document.getElementById(id);
+      el.addEventListener('change', () => renderCard(prefix, mode));
+      el.addEventListener('input', () => renderCard(prefix, mode));
     });
   }
 
