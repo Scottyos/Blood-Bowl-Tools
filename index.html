@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#111722">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Coach's Resources">
+
+<title>Scottyos Coach's Resources</title>
+
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+
+<style>
+
+:root{
+    --bg-1:#24354e;
+    --bg-2:#111722;
+    --bg-3:#0a0f16;
+    --panel:#1a2432;
+    --border:#425366;
+    --border-hover:#b51c1c;
+    --accent-red:#991b1b;
+    --gold:#d8b95a;
+    --gold-bright:#d7b14d;
+    --text:#EEE;
+    --text-dim:#c3ccd8;
+    --text-faint:#9ea8b5;
+    --sidebar-w:300px;
+    --safe-top:env(safe-area-inset-top,0px);
+    --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html,body{
+    height:100%;
+}
+
+body{
+    font-family:Roboto,sans-serif;
+    background:radial-gradient(circle at top,var(--bg-1) 0%,var(--bg-2) 45%,var(--bg-3) 100%);
+    color:var(--text);
+    overflow:hidden;
+}
+
+/* =========================
+   APP SHELL
+   ========================= */
+
+.app{
+    display:flex;
+    height:100vh;
+    height:100dvh;
+}
+
+/* =========================
+   SIDEBAR
+   ========================= */
+
+.sidebar{
+    width:var(--sidebar-w);
+    flex-shrink:0;
+    display:flex;
+    flex-direction:column;
+    background:linear-gradient(180deg,#151f2d 0%,#0d131c 100%);
+    border-right:2px solid var(--border);
+    padding-top:var(--safe-top);
+    padding-bottom:var(--safe-bottom);
+    overflow-y:auto;
+    transition:transform .3s ease;
+    z-index:20;
+}
+
+.sidebar-header{
+    text-align:center;
+    padding:28px 20px 20px;
+}
+
+.sidebar-header h1{
+    font-family:'Cinzel',serif;
+    font-size:1.5rem;
+    color:var(--gold-bright);
+    letter-spacing:2px;
+    text-shadow:0 0 8px rgba(0,0,0,.8);
+}
+
+.sidebar-header .divider{
+    width:90px;
+    height:3px;
+    margin:16px auto 0;
+    background:var(--accent-red);
+    border-radius:3px;
+}
+
+.tool-list{
+    list-style:none;
+    padding:8px 14px;
+    flex-grow:1;
+}
+
+.tool-btn{
+    width:100%;
+    display:flex;
+    align-items:center;
+    gap:14px;
+
+    background:var(--panel);
+    border:2px solid var(--border);
+    border-radius:12px;
+    color:var(--text);
+    text-align:left;
+    font-family:Roboto,sans-serif;
+    font-size:.98rem;
+
+    padding:14px 16px;
+    margin-bottom:12px;
+
+    cursor:pointer;
+    transition:.2s;
+}
+
+.tool-btn .tool-icon{
+    font-size:1.5rem;
+    line-height:1;
+    flex-shrink:0;
+}
+
+.tool-btn .tool-name{
+    font-family:'Cinzel',serif;
+    color:var(--gold);
+    font-size:1rem;
+    flex-grow:1;
+}
+
+.tool-btn:hover{
+    border-color:var(--border-hover);
+    box-shadow:0 0 14px rgba(181,28,28,.35);
+}
+
+.tool-btn.active{
+    border-color:var(--gold);
+    background:#233145;
+    box-shadow:0 0 16px rgba(216,185,90,.35);
+}
+
+.tool-btn.active .tool-name{
+    color:var(--gold-bright);
+}
+
+.tool-btn.coming-soon{
+    opacity:.6;
+    cursor:default;
+}
+
+.tool-btn.coming-soon:hover{
+    border-color:var(--border);
+    box-shadow:none;
+}
+
+.tool-btn.coming-soon .tool-name{
+    color:var(--text-faint);
+}
+
+.tool-badge{
+    font-size:.65rem;
+    letter-spacing:.5px;
+    color:var(--text-faint);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:2px 8px;
+    flex-shrink:0;
+}
+
+.sidebar-footer{
+    padding:18px 20px 26px;
+    text-align:center;
+    color:var(--text-faint);
+    font-style:italic;
+    font-size:.85rem;
+    border-top:1px solid #23303f;
+}
+
+.sidebar-footer span{
+    color:var(--gold);
+}
+
+/* =========================
+   MAIN / FRAME
+   ========================= */
+
+.main{
+    flex-grow:1;
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+}
+
+.topbar{
+    display:none;
+    align-items:center;
+    gap:14px;
+    padding:calc(12px + var(--safe-top)) 16px 12px;
+    background:#0d131c;
+    border-bottom:2px solid var(--border);
+    z-index:15;
+}
+
+.menu-toggle{
+    background:var(--panel);
+    border:2px solid var(--border);
+    border-radius:10px;
+    color:var(--gold);
+    font-size:1.2rem;
+    width:42px;
+    height:42px;
+    flex-shrink:0;
+    cursor:pointer;
+}
+
+.topbar-title{
+    font-family:'Cinzel',serif;
+    color:var(--gold-bright);
+    font-size:1.1rem;
+    letter-spacing:1px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.frame-wrap{
+    flex-grow:1;
+    position:relative;
+    background:var(--bg-3);
+}
+
+#toolFrame{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    border:none;
+    background:#fff;
+}
+
+.welcome{
+    position:absolute;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:40px;
+}
+
+.welcome .icon{
+    font-size:3.5rem;
+    margin-bottom:20px;
+}
+
+.welcome h2{
+    font-family:'Cinzel',serif;
+    color:var(--gold-bright);
+    font-size:1.6rem;
+    letter-spacing:1px;
+    margin-bottom:14px;
+}
+
+.welcome p{
+    color:var(--text-dim);
+    max-width:420px;
+    line-height:1.6;
+}
+
+.hidden{
+    display:none !important;
+}
+
+.overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.55);
+    z-index:15;
+}
+
+/* =========================
+   MOBILE
+   ========================= */
+
+@media (max-width:820px){
+
+    .topbar{
+        display:flex;
+    }
+
+    .sidebar{
+        position:fixed;
+        top:0;
+        bottom:0;
+        left:0;
+        transform:translateX(-100%);
+        box-shadow:0 0 40px rgba(0,0,0,.6);
+    }
+
+    .sidebar.open{
+        transform:translateX(0);
+    }
+
+    .overlay.show{
+        display:block;
+    }
+
+    .sidebar-header h1{
+        font-size:1.3rem;
+    }
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- =========================
+         SIDEBAR
+         ========================= -->
+
+    <nav class="sidebar" id="sidebar" aria-label="Tool menu">
+
+        <div class="sidebar-header">
+            <h1>Coach's Resources</h1>
+            <div class="divider"></div>
+        </div>
+
+        <ul class="tool-list" id="toolList">
+
+            <li>
+                <button class="tool-btn" data-src="block-dice-trainer.html" data-name="Block Dice Trainer">
+                    <span class="tool-icon">🎲</span>
+                    <span class="tool-name">Block Dice Trainer</span>
+                </button>
+            </li>
+
+            <li>
+                <button class="tool-btn" data-src="bloodbowl-skills-quiz.html" data-name="Skills Quiz">
+                    <span class="tool-icon">📖</span>
+                    <span class="tool-name">Skills Quiz</span>
+                </button>
+            </li>
+
+            <li>
+                <button class="tool-btn" data-src="blood-bowl-odds-caller.html" data-name="Odds Caller">
+                    <span class="tool-icon">📊</span>
+                    <span class="tool-name">Odds Caller</span>
+                </button>
+            </li>
+
+            <li>
+                <button class="tool-btn" data-src="bloodbowl-turn-clock.html" data-name="Turn Clock">
+                    <span class="tool-icon">⏱️</span>
+                    <span class="tool-name">Turn Clock</span>
+                </button>
+            </li>
+
+            <li>
+                <button class="tool-btn" data-src="bloodbowl-team-comparator.html" data-name="Team Comparator">
+                    <span class="tool-icon">⚔️</span>
+                    <span class="tool-name">Team Comparator</span>
+                </button>
+            </li>
+
+            <li>
+                <button class="tool-btn" data-src="bb-injury-calc.html" data-name="Armour &amp; Injury Odds">
+                    <span class="tool-icon">💥</span>
+                    <span class="tool-name">Armour &amp; Injury Odds</span>
+                </button>
+            </li>
+
+        </ul>
+
+        <div class="sidebar-footer">
+            <span>"Nuffle Favours the Prepared."</span>
+            <br>
+            Scottyos Coach's Resources
+        </div>
+
+    </nav>
+
+    <div class="overlay" id="overlay"></div>
+
+    <!-- =========================
+         MAIN
+         ========================= -->
+
+    <div class="main">
+
+        <div class="topbar">
+            <button class="menu-toggle" id="menuToggle" aria-label="Open menu">☰</button>
+            <div class="topbar-title" id="topbarTitle">Coach's Resources</div>
+        </div>
+
+        <div class="frame-wrap">
+
+            <div class="welcome" id="welcome">
+                <div class="icon">🏈</div>
+                <h2>Pick a tool to get started</h2>
+                <p>
+                    Choose one of the training tools from the menu on the left
+                    to load it here.
+                </p>
+            </div>
+
+            <iframe id="toolFrame" class="hidden" title="Blood Bowl Tool"></iframe>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+const sidebar   = document.getElementById('sidebar');
+const overlay   = document.getElementById('overlay');
+const menuBtn   = document.getElementById('menuToggle');
+const frame     = document.getElementById('toolFrame');
+const welcome   = document.getElementById('welcome');
+const title     = document.getElementById('topbarTitle');
+const buttons   = document.querySelectorAll('.tool-btn:not(.coming-soon)');
+
+function isMobile(){
+    return window.matchMedia('(max-width:820px)').matches;
+}
+
+function openMenu(){
+    sidebar.classList.add('open');
+    overlay.classList.add('show');
+}
+
+function closeMenu(){
+    sidebar.classList.remove('open');
+    overlay.classList.remove('show');
+}
+
+menuBtn.addEventListener('click', () => {
+    sidebar.classList.contains('open') ? closeMenu() : openMenu();
+});
+
+overlay.addEventListener('click', closeMenu);
+
+function loadTool(src, name, pushHash){
+    frame.src = src;
+    frame.classList.remove('hidden');
+    welcome.classList.add('hidden');
+    title.textContent = name;
+
+    buttons.forEach(b => b.classList.toggle('active', b.dataset.src === src));
+
+    if(pushHash !== false){
+        history.replaceState(null, '', '#' + encodeURIComponent(src));
+    }
+
+    if(isMobile()){
+        closeMenu();
+    }
+}
+
+buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        loadTool(btn.dataset.src, btn.dataset.name);
+    });
+});
+
+// Restore last tool from the URL hash, if present
+const initialSrc = decodeURIComponent(location.hash.replace('#', ''));
+const initialBtn = [...buttons].find(b => b.dataset.src === initialSrc);
+
+if(initialBtn){
+    loadTool(initialBtn.dataset.src, initialBtn.dataset.name, false);
+}
+
+if("serviceWorker" in navigator){
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch(() => {
+            // Installability/offline support is optional — the app
+            // still works fine without it, e.g. over plain http.
+        });
+    });
+}
+
+</script>
+
+</body>
+</html>
