@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dice Rolls Probability · Blood Bowl</title>
+<style>
+:root{
+  --pitch:#0f2a1a; --turf:#17402a; --turf2:#1e5236; --line:#2f6b48;
+  --gold:#d4a73a; --gold-hi:#f0cb6a; --cream:#efe6cf; --muted:#9db8a5;
+  --bad:#c9573f; --ok:#6fcf8f;
+  --display:"Rockwell","Roboto Slab","Georgia",serif;
+  --body:"Trebuchet MS","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;color:var(--cream);font-family:var(--body);
+  background:
+   repeating-linear-gradient(90deg,transparent 0 79px,rgba(255,255,255,.035) 79px 80px),
+   var(--pitch);
+  padding:24px 16px 56px}
+.wrap{max-width:860px;margin:0 auto}
+h1{font-family:var(--display);font-size:2rem;margin:0 0 4px;color:var(--gold-hi);letter-spacing:.5px}
+.sub{margin:0 0 22px;color:var(--muted);max-width:60ch;line-height:1.5}
+.result{background:var(--turf);border:2px solid var(--gold);border-radius:6px;padding:18px 20px;
+  display:flex;flex-wrap:wrap;gap:18px 32px;align-items:center;margin-bottom:22px;position:sticky;top:8px;z-index:5;
+  box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.tile{min-width:120px}
+.tile .big{font-family:var(--display);font-size:2.1rem;line-height:1;color:var(--cream)}
+.tile.main .big{font-size:3.4rem;color:var(--gold-hi)}
+.tile.rr .big{color:var(--ok)}
+.tile .lab b{color:var(--cream);font-weight:normal}
+.tile+.tile{border-left:1px solid var(--line);padding-left:22px}
+.big small{font-size:1.4rem}
+.lab{color:var(--muted);font-size:.9rem;margin-top:4px}
+.rows{display:flex;flex-direction:column;gap:10px}
+.row{background:var(--turf);border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:4px;padding:12px;
+  display:grid;grid-template-columns:auto 1fr auto;gap:10px 14px;align-items:center}
+.pool{display:flex;justify-content:space-between;align-items:center;gap:14px;background:var(--turf2);border:1px solid var(--ok);border-radius:4px;padding:12px 14px;margin-bottom:14px}
+.pool b{font-family:var(--display);font-size:1.1rem;color:var(--ok)}
+.idx{font-family:var(--display);font-size:1.3rem;color:var(--gold);width:1.6rem;text-align:center}
+.ctrl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+label{font-size:.8rem;color:var(--muted)}
+select,button{font:inherit;color:var(--cream);background:var(--pitch);border:1px solid var(--line);border-radius:4px;padding:7px 10px;cursor:pointer}
+select:focus-visible,button:focus-visible{outline:2px solid var(--gold-hi);outline-offset:2px}
+button:hover{border-color:var(--gold)}
+.qty{display:flex;align-items:center;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:var(--pitch)}
+.qty button{border:0;border-radius:0;padding:7px 11px;font-weight:bold}
+.qty span{min-width:2.2rem;text-align:center;font-family:var(--display);font-size:1.1rem}
+.rowres{text-align:right;min-width:92px}
+.rowres b{font-family:var(--display);font-size:1.25rem;color:var(--gold-hi);display:block}
+.rowres i{font-style:normal;font-size:.8rem;color:var(--muted)}
+.del{color:var(--bad);border-color:transparent;background:none;font-size:1.1rem}
+.bar{grid-column:1/-1;height:6px;background:var(--pitch);border-radius:3px;overflow:hidden}
+.bar div{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-hi));transition:width .25s}
+.actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.add{background:var(--gold);color:#2a1d00;border-color:var(--gold);font-weight:bold}
+.add:hover{background:var(--gold-hi)}
+.note{margin-top:26px;color:var(--muted);font-size:.85rem;line-height:1.6;max-width:70ch}
+@media(max-width:620px){
+  .row{grid-template-columns:auto 1fr}
+  .rowres{grid-column:1/-1;text-align:left;display:flex;gap:10px;align-items:baseline}
+  .tile.main .big{font-size:2.6rem}
+  .tile+.tile{border-left:0;padding-left:0}
+}
+@media(prefers-reduced-motion:reduce){.bar div{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Dice Rolls Probability</h1>
+  <p class="sub">Chain rolls in the order you'll make them. Set how many team rerolls you have, add each roll in order, and see the odds of getting through the whole sequence.</p>
+
+  <div class="result" id="tiles" aria-live="polite"></div>
+
+  <div class="pool">
+    <div>
+      <b>Team rerolls</b>
+      <div class="lab">Used in order on the first failed rolls, then gone for the rest of the chain.</div>
+    </div>
+    <div class="qty" role="group" aria-label="Team rerolls">
+      <button id="rrdown" aria-label="Fewer rerolls">▼</button>
+      <span id="rrval">1</span>
+      <button id="rrup" aria-label="More rerolls">▲</button>
+    </div>
+  </div>
+
+  <div class="rows" id="rows"></div>
+  <div class="actions">
+    <button class="add" id="add">+ Add roll</button>
+    <button id="clear">Clear all</button>
+  </div>
+
+  <p class="note">
+    Rerolls are spent on the first failures in the chain, in order. Once they're used up, the next failure ends the sequence.
+    Block dice: 2 or 3 dice are chosen by the attacker, −2 or −3 dice by the defender. “Push required” accepts any result except Attacker Down and Both Down.
+    On 2D6, “8+” means 8 or higher: armour is broken on its value or better, so 8+ covers 8 to 12. Casualty results follow the D16 table: 1–8 Badly Hurt, 9–10 Seriously Hurt, 11–12 Serious Injury, 13–14 Lasting Injury, 15–16 Dead. A Lasting Injury then rolls a D6 for the reduction (1–2 −1 AV, 3 −1 MV, 4 −1 PA, 5 −1 AG, 6 −1 ST). To chain them, add a Casualty roll, then a Lasting Injury roll.
+  </p>
+</div>
+
+<script>
+const BLOCK_FACES = {
+  push:  {label:'Push required (Push, Stumble or Down)', p:4/6},
+  pushbd:{label:'Push required (Both Down counts too)', p:5/6},
+  down:  {label:'Defender down', p:2/6},
+  downbd:{label:'Defender down (Both Down counts)', p:3/6}
+};
+const BLOCK_DICE = [[1,'1 die'],[2,'2 dice'],[3,'3 dice'],[-2,'−2 dice (defender picks)'],[-3,'−3 dice (defender picks)']];
+const TYPES = {d6:'D6', d6x2:'2D6 (armour / injury)', d16:'Casualty (D16)', lasting:'Lasting Injury (D6)', block:'Block dice'};
+const MAXT = {d6:6, d6x2:12};
+const LASTING = {
+  head:    {label:'Head Injury, −1 AV (1–2)', p:2/6},
+  knee:    {label:'Smashed Knee, −1 MV (3)', p:1/6},
+  arm:     {label:'Broken Arm, −1 PA (4)', p:1/6},
+  hip:     {label:'Dislocated Hip, −1 AG (5)', p:1/6},
+  shoulder:{label:'Broken Shoulder, −1 ST (6)', p:1/6}
+};
+const CAS = {
+  shup:{label:'Seriously Hurt or worse (9–16)', p:8/16},
+  siup:{label:'Serious Injury or worse (11–16)', p:6/16},
+  liup:{label:'Lasting Injury or worse (13–16)', p:4/16},
+  dead:{label:'Dead (15–16)', p:2/16},
+  bh:  {label:'Badly Hurt only (1–8)', p:8/16},
+  sh:  {label:'Seriously Hurt only (9–10)', p:2/16},
+  si:  {label:'Serious Injury only (11–12)', p:2/16},
+  li:  {label:'Lasting Injury only (13–14)', p:2/16}
+};
+
+let rolls = [{type:'d6',target:4,qty:1,dice:1,face:'push',cas:'siup',lasting:'head'}];
+let rerolls = 1;
+
+function twoD6(t){let c=0;for(let a=1;a<=6;a++)for(let b=1;b<=6;b++)if(a+b>=t)c++;return c/36}
+function baseP(r){
+  if(r.type==='d6') return (7-r.target)/6;
+  if(r.type==='d6x2') return twoD6(r.target);
+  if(r.type==='d16') return CAS[r.cas].p;
+  if(r.type==='lasting') return LASTING[r.lasting].p;
+  const f=BLOCK_FACES[r.face].p, n=Math.abs(r.dice);
+  return r.dice>0 ? 1-Math.pow(1-f,n) : Math.pow(f,n);
+}
+// Walk the chain in order. dist[k] = chance of still being alive with k rerolls left.
+// A failed roll uses a reroll if one is left (first failures get the rerolls); otherwise the chain ends.
+function step(dist,p){
+  const n=new Array(dist.length).fill(0);
+  for(let k=0;k<dist.length;k++){
+    n[k]+=dist[k]*p;
+    if(k>0) n[k-1]+=dist[k]*(1-p)*p;
+  }
+  return n;
+}
+const sum=d=>d.reduce((a,b)=>a+b,0);
+function chainP(R){
+  let d=new Array(R+1).fill(0); d[R]=1;
+  for(const r of rolls){const p=baseP(r); for(let q=0;q<r.qty;q++) d=step(d,p);}
+  return sum(d);
+}
+const pct=x=>{const v=x*100;return (v>=99.95||v===0?v.toFixed(0):v>=10?v.toFixed(1):v.toFixed(2))+'%'};
+
+function render(){
+  let dist=new Array(rerolls+1).fill(0); dist[rerolls]=1;
+  let cum=1;
+  const html=rolls.map((r,i)=>{
+    const before=sum(dist);
+    const bp=baseP(r);
+    for(let q=0;q<r.qty;q++) dist=step(dist,bp);
+    const after=sum(dist);
+    const p=before?after/before:0; cum=after;
+    const left=after?dist.reduce((a,v,k)=>a+k*v,0)/after:0;
+    const targets = Array.from({length:MAXT[r.type]-1},(_, n)=>n+2);
+    let opts='';
+    if(r.type==='block'){
+      opts=`<label>Dice <select data-i="${i}" data-k="dice">${BLOCK_DICE.map(([v,l])=>`<option value="${v}" ${v==r.dice?'selected':''}>${l}</option>`).join('')}</select></label>
+            <label>Need <select data-i="${i}" data-k="face">${Object.entries(BLOCK_FACES).map(([k,f])=>`<option value="${k}" ${k===r.face?'selected':''}>${f.label}</option>`).join('')}</select></label>`;
+    } else if(r.type==='lasting'){
+      opts=`<label>Result <select data-i="${i}" data-k="lasting">${Object.entries(LASTING).map(([k,c])=>`<option value="${k}" ${k===r.lasting?'selected':''}>${c.label}</option>`).join('')}</select></label>`;
+    } else if(r.type==='d16'){
+      opts=`<label>Result <select data-i="${i}" data-k="cas">${Object.entries(CAS).map(([k,c])=>`<option value="${k}" ${k===r.cas?'selected':''}>${c.label}</option>`).join('')}</select></label>`;
+    } else {
+      opts=`<label>Target <select data-i="${i}" data-k="target">${targets.map(t=>`<option value="${t}" ${t==r.target?'selected':''}>${t}+</option>`).join('')}</select></label>`;
+    }
+    return `<div class="row">
+      <div class="idx">${i+1}</div>
+      <div class="ctrl">
+        <label>Dice type <select data-i="${i}" data-k="type">${Object.entries(TYPES).map(([k,l])=>`<option value="${k}" ${k===r.type?'selected':''}>${l}</option>`).join('')}</select></label>
+        ${opts}
+      </div>
+      <div class="rowres"><b>${pct(p)}</b><i>this step · running ${pct(cum)}${rerolls?` · ~${left.toFixed(2)} rerolls left`:''}</i></div>
+      <div class="bar"><div style="width:${cum*100}%"></div></div>
+      <button class="del" data-i="${i}" data-a="del" aria-label="Remove roll ${i+1}" style="grid-column:1/-1;justify-self:end;margin-top:-6px;padding:2px 8px;font-size:.8rem">Remove</button>
+    </div>`;
+  }).join('');
+  document.getElementById('rows').innerHTML = html || '<p class="sub">No rolls yet. Add one to start.</p>';
+  const tiles=document.getElementById('tiles');
+  if(!rolls.length){tiles.innerHTML='<div class="tile main"><div class="big">–</div><div class="lab">add a roll to start</div></div>';return}
+  tiles.innerHTML=Array.from({length:rerolls+1},(_,k)=>{
+    const p=chainP(k);
+    const name=k===0?'No rerolls':`${k} reroll${k>1?'s':''}`;
+    return `<div class="tile ${k===0?'main':'rr'}"><div class="big">${pct(p)}</div>
+      <div class="lab"><b>${name}</b>${k===0?' · chance every roll succeeds':''}<br>${p>0?`1 in ${(1/p).toFixed(p>0.5?2:1)}`:'impossible'} · ${pct(1-p)} to fail</div></div>`;
+  }).join('');
+}
+
+document.getElementById('rows').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-a]'); if(!b) return;
+  const i=+b.dataset.i, r=rolls[i], a=b.dataset.a;
+  if(a==='del') rolls.splice(i,1);
+  render();
+});
+document.getElementById('rows').addEventListener('change',e=>{
+  const s=e.target.closest('select[data-k]'); if(!s) return;
+  const r=rolls[+s.dataset.i], k=s.dataset.k;
+  if(k==='type'){
+    r.type=s.value;
+    if(MAXT[r.type]) r.target=Math.min(Math.max(r.target,2),MAXT[r.type]);
+  } else if(k==='face') r.face=s.value;
+  else if(k==='cas') r.cas=s.value;
+  else if(k==='lasting') r.lasting=s.value;
+  else r[k]=+s.value;
+  render();
+});
+function setRR(v){rerolls=Math.max(0,v);document.getElementById('rrval').textContent=rerolls;render()}
+document.getElementById('rrup').onclick=()=>setRR(rerolls+1);
+document.getElementById('rrdown').onclick=()=>setRR(rerolls-1);
+document.getElementById('add').onclick=()=>{
+  const last=rolls[rolls.length-1];
+  rolls.push(last?{...last,qty:1}:{type:'d6',target:4,qty:1,dice:1,face:'push',cas:'siup',lasting:'head'});
+  render();
+};
+document.getElementById('clear').onclick=()=>{rolls=[];render()};
+render();
+</script>
+</body>
+</html>
