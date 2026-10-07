@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BB2025 Skill &amp; Trait Finder</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--pitch:#0e2417;--turf:#16371f;--line:#2b5a37;--gold:#d9a92e;--bone:#ece4cf;--blood:#a3241f;--mute:#8fa593}
+*{box-sizing:border-box}
+body{margin:0;background:var(--pitch);color:var(--bone);font:15px/1.45 Inter,system-ui,sans-serif}
+header{padding:22px 20px 14px;border-bottom:3px solid var(--gold)}
+h1{margin:0;font:400 34px/1 Anton,Impact,sans-serif;letter-spacing:.02em;color:var(--gold)}
+header p{margin:6px 0 0;color:var(--mute);max-width:70ch}
+.wrap{display:grid;grid-template-columns:320px 1fr;gap:0;align-items:start}
+aside{position:sticky;top:0;max-height:100vh;overflow:auto;padding:14px 16px 40px;border-right:1px solid var(--line);background:var(--turf)}
+main{padding:16px 20px 60px;min-width:0}
+input[type=search]{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:var(--pitch);color:var(--bone);font:inherit;margin-bottom:10px}
+.none{display:flex;gap:8px;align-items:center;padding:9px 10px;border:1px solid var(--blood);border-radius:4px;margin-bottom:10px;font-weight:600;cursor:pointer}
+details{border-top:1px solid var(--line);padding:6px 0}
+summary{cursor:pointer;font:400 18px Anton,sans-serif;letter-spacing:.03em;padding:4px 0;color:var(--gold)}
+label.sk{display:flex;gap:8px;align-items:center;padding:3px 2px;cursor:pointer}
+label.sk .n{margin-left:auto;color:var(--mute);font-size:12px}
+label.sk.z{opacity:.45}
+input[type=checkbox]{accent-color:var(--gold);width:16px;height:16px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.bar b{font:400 22px Anton,sans-serif;letter-spacing:.02em}
+button{background:none;border:1px solid var(--gold);color:var(--gold);padding:5px 12px;border-radius:4px;font:inherit;cursor:pointer}
+button:hover,button:focus-visible{background:var(--gold);color:var(--pitch)}
+.tag{background:var(--gold);color:var(--pitch);padding:2px 9px;border-radius:99px;font-weight:600;font-size:13px}
+.tag.red{background:var(--blood);color:var(--bone)}
+.team{margin-bottom:18px;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.team h2{margin:0;padding:8px 12px;background:var(--turf);font:400 21px Anton,sans-serif;letter-spacing:.03em;display:flex;justify-content:space-between}
+.team h2 span{font:600 13px Inter;color:var(--mute);align-self:center}
+.pos{padding:8px 12px;border-top:1px solid var(--line);display:grid;grid-template-columns:200px 1fr;gap:6px 12px}
+.pos strong{font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.c{border:1px solid var(--line);border-radius:3px;padding:0 7px;font-size:13px;color:var(--mute)}
+.c.hit{border-color:var(--gold);color:var(--gold);font-weight:600}
+.c.nil{font-style:italic}
+.empty{padding:30px;text-align:center;color:var(--mute);border:1px dashed var(--line);border-radius:6px}
+@media(max-width:760px){.wrap{grid-template-columns:1fr}aside{position:static;max-height:none;border-right:0}.pos{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+<h1>Skill &amp; Trait Finder</h1>
+<p>Tick skills and traits to see which BB2025 positions start with every one of them. Data from Blood Bowl Base (Season 3 rosters, with the latest FAQ changes).</p>
+</header>
+<div class="wrap">
+<aside>
+<input type="search" id="q" placeholder="Search skills and traits" aria-label="Search skills and traits">
+<label class="none"><input type="checkbox" id="none"> No skills / traits</label>
+<div id="cats"></div>
+</aside>
+<main>
+<div class="bar"><b id="sum"></b><span id="tags"></span><button id="clr" type="button">Clear all</button></div>
+<div id="out"></div>
+</main>
+</div>
+<script>
+const CATS=[
+["Agility","Catch|Diving Catch|Diving Tackle|Dodge|Defensive|Hit and Run|Jump Up|Leap|Safe Pair of Hands|Sidestep|Sprint|Sure Feet"],
+["Devious","Dirty Player|Eye Gouge|Fumblerooski|Lethal Flight|Lone Fouler|Pile Driver|Put the Boot In|Quick Foul|Saboteur|Shadowing|Sneaky Git|Violent Innovator"],
+["General","Block|Dauntless|Fend|Frenzy|Kick|Pro|Steady Footing|Strip Ball|Sure Hands|Tackle|Taunt|Wrestle"],
+["Mutation","Big Hand|Claws|Disturbing Presence|Extra Arms|Foul Appearance|Horns|Iron Hard Skin|Monstrous Mouth|Prehensile Tail|Tentacles|Two Heads|Very Long Legs"],
+["Passing","Accurate|Cannoneer|Cloud Burster|Dump-off|Give and Go|Hail Mary Pass|Leader|Nerves of Steel|On the Ball|Pass|Punt|Safe Pass"],
+["Strength","Arm Bar|Brawler|Break Tackle|Bullseye|Grab|Guard|Juggernaut|Mighty Blow|Multiple Block|Stand Firm|Strong Arm|Thick Skull"],
+["Traits","Always Hungry|Animal Savagery|Animosity|Ball & Chain|Bloodlust|Bombardier|Bone Head|Breathe Fire|Chainsaw|Decay|Drunkard|Hatred|Hypnotic Gaze|Insignificant|Kick Team-mate|Loner|My Ball|No Ball|Pick-me-up|Plague Ridden|Pogo|Projectile Vomit|Really Stupid|Regeneration|Right Stuff|Secret Weapon|Stab|Stunty|Swoop|Take Root|Throw Team-mate|Timmm-ber!|Titchy|Trickster|Unchannelled Fury|Unsteady"]
+].map(([n,s])=>[n,s.split("|")]);
+const M={TROLL:"Always Hungry;Loner (4+);Mighty Blow;Projectile Vomit;Really Stupid;Regeneration;Throw Team-mate",
+TROLLN:"Always Hungry;Mighty Blow;Projectile Vomit;Really Stupid;Regeneration;Throw Team-mate",
+TREE:"Mighty Blow;Stand Firm;Strong Arm;Take Root;Thick Skull;Throw Team-mate;Timmm-ber!",
+OGRE:"Bone Head;Loner (3+);Mighty Blow;Thick Skull;Throw Team-mate",
+MINO:"Frenzy;Horns;Loner (4+);Mighty Blow;Thick Skull;Unchannelled Fury",
+SKAV:"Animosity (Goblin)"};
+const RAW=`#Amazon
+Eagle Warrior|Dodge
+Python Warrior|Dodge;On the Ball;Pass;Safe Pass
+Piranha Warrior|Dodge;Hit and Run;Jump Up
+Jaguar Warrior|Defensive;Dodge
+#Black Orc
+Goblin Bruiser|Dodge;Right Stuff;Stunty;Thick Skull
+Black Orc|Brawler;Grab
+Trained Troll|@TROLLN
+#Bretonnian
+Bretonnian Squire|Wrestle
+Knight Catcher|Catch;Dauntless;Nerves of Steel
+Knight Thrower|Dauntless;Nerves of Steel;Pass
+Grail Knight|Block;Dauntless;Steady Footing
+#Chaos Chosen
+Beastman Lineman|Horns;Thick Skull
+Chaos Chosen|Arm Bar
+Troll|@TROLL
+Ogre|Bone Head;Loner (4+);Mighty Blow;Thick Skull;Throw Team-mate
+Minotaur|@MINO
+#Chaos Dwarf
+Hobgoblin Lineman|
+Sneaky Stabba|Shadowing;Stab
+Chaos Dwarf Blocker|Block;Iron Hard Skin;Thick Skull
+Flamesmith|Brawler;Breathe Fire;Disturbing Presence;Thick Skull
+Bull Centaur|Sprint;Sure Feet;Thick Skull;Unsteady
+Minotaur|@MINO
+#Chaos Renegades
+Renegade Human|Animosity (All)
+Renegade Goblin|Animosity (All);Dodge;Right Stuff;Stunty
+Renegade Orc|Animosity (All)
+Renegade Skaven|Animosity (All)
+Renegade Dark Elf|Animosity (All)
+Renegade Human Thrower|Animosity (All);Pass;Sure Hands
+Troll|@TROLL
+Ogre|@OGRE
+Minotaur|@MINO
+#Dark Elf
+Dark Elf Lineman|
+Dark Elf Runner|Dump-off;Punt
+Dark Elf Assassin|Hit and Run;Shadowing;Stab
+Dark Elf Blitzer|Block
+Witch Elf|Dodge;Frenzy;Jump Up
+#Dwarf
+Dwarf Lineman|Block;Defensive;Thick Skull
+Dwarf Runner|Sprint;Sure Hands;Thick Skull
+Dwarf Blitzer|Block;Diving Tackle;Tackle;Thick Skull
+Troll Slayer|Block;Dauntless;Frenzy;Hatred (Troll);Thick Skull
+Deathroller|Break Tackle;Dirty Player;Juggernaut;Loner (4+);Mighty Blow;No Ball;Secret Weapon;Stand Firm
+#Elven Union
+Elf Lineman|Fumblerooski
+Elf Thrower|Hail Mary Pass;Pass
+Elf Catcher|Catch;Diving Catch;Nerves of Steel
+Elf Blitzer|Block;Sidestep
+#Gnome
+Gnome Lineman|Jump Up;Right Stuff;Stunty;Wrestle
+Woodland Fox|Dodge;My Ball;Sidestep;Stunty
+Gnome Illusionist|Jump Up;Stunty;Trickster;Wrestle
+Gnome Beastmaster|Guard;Jump Up;Stunty;Wrestle
+Altern Forest Treeman|@TREE
+#Goblin
+Goblin Lineman|Dodge;Right Stuff;Stunty
+Looney|Chainsaw;No Ball;Secret Weapon;Stunty
+Bomma|Bombardier;Dodge;Secret Weapon;Stunty
+'Ooligan|Dirty Player;Disturbing Presence;Dodge;Right Stuff;Stunty;Taunt
+Doom Diver|Dodge;Right Stuff;Stunty;Swoop
+Fanatic|Ball & Chain;No Ball;Secret Weapon;Stunty
+Pogoer|Dodge;Pogo;Stunty
+#Halfling
+Halfling Hopeful|Dodge;Right Stuff;Stunty
+Halfling Hefty|Dodge;Fend;Stunty
+Halfling Catcher|Catch;Dodge;Right Stuff;Sprint;Stunty
+Athel Forest Treeman|@TREE
+#High Elf
+High Elf Lineman|
+Phoenix Warrior|Cloud Burster;Pass;Safe Pass
+Dragon Prince|Block;My Ball;Steady Footing
+White Lion|Claws;Wrestle
+#Human
+Human Lineman|
+Halfling Hopeful|Dodge;Right Stuff;Stunty
+Human Catcher|Catch;Dodge
+Human Thrower|Pass;Sure Hands
+Human Blitzer|Block;Tackle
+Ogre|@OGRE
+#Imperial Nobility
+Imperial Retainer|Fend
+Imperial Thrower|Give and Go;Pass;Pro
+Bodyguard|Stand Firm;Wrestle
+Noble Blitzer|Block;Catch;Pro
+Ogre|@OGRE
+#Khorne
+Bloodborn Marauder|Frenzy
+Khorngor|Horns;Juggernaut;Jump Up;Thick Skull
+Bloodseeker|Frenzy
+Bloodspawn|Claws;Frenzy;Loner (4+);Mighty Blow;Unchannelled Fury
+#Lizardmen
+Skink Lineman|Dodge;Stunty
+Chameleon Skink|Dodge;On the Ball;Shadowing;Stunty
+Saurus Blocker|Juggernaut;Unsteady
+Kroxigor|Bone Head;Loner (4+);Mighty Blow;Prehensile Tail;Thick Skull
+#Necromantic Horror
+Zombie Lineman|Eye Gouge;Regeneration;Unsteady
+Ghoul Runner|Dodge;Regeneration
+Wraith|Block;Foul Appearance;No Ball;Regeneration;Sidestep
+Flesh Golem|Regeneration;Stand Firm;Thick Skull;Unsteady
+Werewolf|Claws;Frenzy;Regeneration
+#Norse
+Norse Raider|Block;Drunkard;Thick Skull;Unsteady
+Beer Boar|Dodge;No Ball;Pick-me-up;Stunty;Titchy
+Norse Berserker|Block;Frenzy;Jump Up
+Valkyrie|Catch;Dauntless;Pass;Strip Ball
+Ulfwerener|Frenzy;Unsteady
+Yhetee|Claws;Disturbing Presence;Frenzy;Loner (4+);Unchannelled Fury
+#Nurgle
+Rotter|Decay;Plague Ridden
+Pestigor|Horns;Plague Ridden;Regeneration;Steady Footing;Thick Skull
+Bloater|Disturbing Presence;Foul Appearance;Plague Ridden;Regeneration;Stand Firm;Unsteady
+Rotspawn|Disturbing Presence;Foul Appearance;Loner (4+);Mighty Blow;Pick-me-up;Plague Ridden;Really Stupid;Regeneration;Tentacles
+#Ogre
+Gnoblar Lineman|Dodge;Right Stuff;Sidestep;Stunty;Titchy
+Ogre Blocker|Bone Head;Mighty Blow;Thick Skull;Throw Team-mate
+Ogre Runt Punter|Bone Head;Kick Team-mate;Mighty Blow;Thick Skull
+#Old World Alliance
+Human Lineman|
+Halfling Hopeful|Dodge;Right Stuff;Stunty
+Human Catcher|Catch;Dodge
+Dwarf Lineman|Block;Defensive;Thick Skull
+Human Thrower|Pass;Sure Hands
+Dwarf Runner|Sprint;Sure Hands;Thick Skull
+Human Blitzer|Block;Tackle
+Ogre|@OGRE
+Altern Forest Treeman|Loner (4+);@TREE
+#Orc
+Orc Lineman|
+Goblin Lineman|Dodge;Right Stuff;Stunty
+Orc Thrower|Pass;Sure Hands
+Orc Blitzer|Block;Break Tackle
+Big Un Blocker|Mighty Blow;Taunt;Thick Skull;Unsteady
+Troll|@TROLL
+#Shambling Undead
+Skeleton Lineman|Regeneration;Thick Skull
+Zombie Lineman|Eye Gouge;Regeneration;Unsteady
+Ghoul Runner|Dodge;Regeneration
+Wight Blitzer|Block;Regeneration;Tackle;Thick Skull
+Mummy|Mighty Blow;Regeneration
+#Skaven
+Skaven Clanrat|
+Skaven Thrower|Pass;Sure Hands
+Gutter Runner|Dodge;Stab
+Skaven Blitzer|Block;Strip Ball
+Rat Ogre|Animal Savagery;Frenzy;Loner (4+);Mighty Blow;Prehensile Tail
+#Snotling
+Snotling Lineman|Dodge;Insignificant;Right Stuff;Sidestep;Stunty;Titchy
+Fun-hoppa|Dodge;Pogo;Right Stuff;Sidestep;Stunty
+Stilty Runna|Dodge;Right Stuff;Sidestep;Sprint;Stunty
+Fungus Flinga|Bombardier;Dodge;Right Stuff;Secret Weapon;Sidestep;Stunty;Titchy
+Pump Wagon|Dirty Player;Juggernaut;Mighty Blow;Really Stupid;Stand Firm
+Trained Troll|@TROLLN
+#Tomb Kings
+Skeleton Lineman|Regeneration;Thick Skull
+Tomb Kings Thrower|Pass;Regeneration;Sure Hands;Thick Skull
+Tomb Kings Blitzer|Block;Regeneration;Thick Skull
+Tomb Guardian|Brawler;Decay;Regeneration
+#Underworld Denizens
+Goblin Lineman|Dodge;Right Stuff;Stunty
+Snotling Lineman|Dodge;Insignificant;Right Stuff;Sidestep;Stunty;Titchy
+Skaven Clanrat|@SKAV
+Skaven Thrower|@SKAV;Pass;Sure Hands
+Gutter Runner|@SKAV;Dodge;Stab
+Skaven Blitzer|@SKAV;Block;Strip Ball
+Troll|@TROLL
+Rat Ogre|Animal Savagery;Frenzy;Loner (4+);Mighty Blow;Prehensile Tail
+#Vampire
+Thrall Lineman|
+Vampire Runner|Bloodlust (2+);Hypnotic Gaze;Regeneration
+Vampire Thrower|Bloodlust (2+);Hypnotic Gaze;Pass;Regeneration
+Vampire Blitzer|Bloodlust (3+);Hypnotic Gaze;Juggernaut;Regeneration
+Vargheist|Bloodlust (3+);Claws;Frenzy;Loner (4+);Regeneration
+#Wood Elf
+Wood Elf Lineman|
+Wood Elf Thrower|Pass;Safe Pair of Hands
+Wood Elf Catcher|Catch;Dodge;Sprint
+Wardancer|Block;Dodge;Leap
+Loren Forest Treeman|Loner (4+);Mighty Blow;Stand Firm;Strong Arm;Take Root;Thick Skull;Throw Team-mate`;
+
+const base=s=>s.replace(/\s*\(.*\)$/,"");
+const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const P=[];let team;
+RAW.split("\n").forEach(l=>{
+  if(l[0]==="#"){team=l.slice(1);return}
+  const [pos,sk=""]=l.split("|");
+  const list=sk.replace(/@(\w+)/g,(_,k)=>M[k]).split(";").filter(Boolean);
+  P.push({team,pos,sk:list,b:list.map(base)});
+});
+const $=id=>document.getElementById(id);
+const count={};P.forEach(p=>p.b.forEach(b=>count[b]=(count[b]||0)+1));
+
+$("cats").innerHTML=CATS.map(([n,list])=>`<details open><summary>${n}</summary>${list.map(s=>
+ `<label class="sk${count[s]?"":" z"}" data-n="${esc(s.toLowerCase())}"><input type="checkbox" class="s" value="${esc(s)}"> ${esc(s)}<span class="n">${count[s]||0}</span></label>`).join("")}</details>`).join("");
+
+function sel(){return [...document.querySelectorAll(".s:checked")].map(e=>e.value)}
+function render(){
+  const s=sel(),none=$("none").checked;
+  const rows=P.filter(p=>none?p.b.length===0:s.every(x=>p.b.includes(x)));
+  const g={};rows.forEach(p=>(g[p.team]=g[p.team]||[]).push(p));
+  const teams=Object.keys(g);
+  $("sum").textContent=`${rows.length} position${rows.length===1?"":"s"} · ${teams.length} team${teams.length===1?"":"s"}`;
+  $("tags").innerHTML=none?'<span class="tag red">No skills / traits</span>':s.map(x=>`<span class="tag">${esc(x)}</span>`).join(" ");
+  $("out").innerHTML=teams.length?teams.map(t=>`<section class="team"><h2>${esc(t)}<span>${g[t].length} position${g[t].length===1?"":"s"}</span></h2>${g[t].map(p=>
+    `<div class="pos"><strong>${esc(p.pos)}</strong><div class="chips">${p.sk.length?p.sk.map(k=>`<span class="c${s.includes(base(k))?" hit":""}">${esc(k)}</span>`).join(""):'<span class="c nil">no starting skills or traits</span>'}</div></div>`).join("")}</section>`).join("")
+    :'<div class="empty">No position starts with that exact combination. Untick one to widen the search.</div>';
+}
+document.addEventListener("change",e=>{
+  if(e.target.id==="none"&&e.target.checked)document.querySelectorAll(".s").forEach(c=>c.checked=false);
+  else if(e.target.classList.contains("s")&&e.target.checked)$("none").checked=false;
+  render();
+});
+$("clr").onclick=()=>{document.querySelectorAll("input[type=checkbox]").forEach(c=>c.checked=false);render()};
+$("q").oninput=e=>{const v=e.target.value.trim().toLowerCase();
+  document.querySelectorAll("label.sk").forEach(l=>l.style.display=l.dataset.n.includes(v)?"":"none")};
+render();
+</script>
+</body>
+</html>
