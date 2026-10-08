@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BB2025 Star Player Skill Finder</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--pitch:#0e2417;--turf:#16371f;--line:#2b5a37;--gold:#d9a92e;--bone:#ece4cf;--blood:#a3241f;--mute:#8fa593}
+*{box-sizing:border-box}
+body{margin:0;background:var(--pitch);color:var(--bone);font:15px/1.45 Inter,system-ui,sans-serif}
+header{padding:22px 20px 14px;border-bottom:3px solid var(--gold)}
+h1{margin:0;font:400 34px/1 Anton,Impact,sans-serif;letter-spacing:.02em;color:var(--gold)}
+header p{margin:6px 0 0;color:var(--mute);max-width:75ch}
+.wrap{display:grid;grid-template-columns:320px 1fr;align-items:start}
+aside{position:sticky;top:0;max-height:100vh;overflow:auto;padding:14px 16px 40px;border-right:1px solid var(--line);background:var(--turf)}
+main{padding:16px 20px 60px;min-width:0}
+input[type=search],select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:var(--pitch);color:var(--bone);font:inherit;margin-bottom:10px}
+details{border-top:1px solid var(--line);padding:6px 0}
+summary{cursor:pointer;font:400 18px Anton,sans-serif;letter-spacing:.03em;padding:4px 0;color:var(--gold)}
+label.sk{display:flex;gap:8px;align-items:center;padding:3px 2px;cursor:pointer}
+label.sk .n{margin-left:auto;color:var(--mute);font-size:12px}
+label.sk.z{opacity:.45}
+input[type=checkbox]{accent-color:var(--gold);width:16px;height:16px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.bar b{font:400 22px Anton,sans-serif;letter-spacing:.02em}
+.bar .sp{flex:1}
+.bar select{width:auto;margin:0}
+button{background:none;border:1px solid var(--gold);color:var(--gold);padding:5px 12px;border-radius:4px;font:inherit;cursor:pointer}
+button:hover,button:focus-visible{background:var(--gold);color:var(--pitch)}
+.tag{background:var(--gold);color:var(--pitch);padding:2px 9px;border-radius:99px;font-weight:600;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.card{border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--turf)}
+.card h2{margin:0;padding:8px 12px;font:400 20px Anton,sans-serif;letter-spacing:.03em;display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line)}
+.card h2 span{font:600 13px Inter;color:var(--gold);white-space:nowrap;align-self:center}
+.sub{padding:4px 12px 0;color:var(--mute);font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:5px;padding:8px 12px 12px}
+.c{border:1px solid var(--line);border-radius:3px;padding:0 7px;font-size:13px;color:var(--mute)}
+.c.hit{border-color:var(--gold);color:var(--gold);font-weight:600}
+.ok{color:var(--gold);font-size:12px;font-weight:600}
+.empty{padding:30px;text-align:center;color:var(--mute);border:1px dashed var(--line);border-radius:6px}
+footer{padding:0 20px 40px;color:var(--mute);font-size:13px;max-width:90ch}
+@media(max-width:760px){.wrap{grid-template-columns:1fr}aside{position:static;max-height:none;border-right:0}}
+</style>
+</head>
+<body>
+<header>
+<h1>Star Player Skill Finder</h1>
+<p>Tick skills and traits to see which star players have every one of them. Every star has Loner, so there is no "no skills" option here.</p>
+</header>
+<div class="wrap">
+<aside>
+<input type="search" id="q" placeholder="Search skills and traits" aria-label="Search skills and traits">
+<div id="cats"></div>
+</aside>
+<main>
+<div class="bar"><b id="sum"></b><span id="tags"></span><span class="sp"></span>
+<select id="sort" aria-label="Sort"><option value="n">Sort by name</option><option value="c">Sort by cost</option></select>
+<button id="clr" type="button">Clear all</button></div>
+<div id="out" class="grid"></div>
+<footer id="foot"></footer>
+</main>
+</div>
+<script>
+const CATS=[
+["Agility","Catch|Diving Catch|Diving Tackle|Dodge|Defensive|Hit and Run|Jump Up|Leap|Safe Pair of Hands|Sidestep|Sprint|Sure Feet"],
+["Devious","Dirty Player|Eye Gouge|Fumblerooski|Lethal Flight|Lone Fouler|Pile Driver|Put the Boot In|Quick Foul|Saboteur|Shadowing|Sneaky Git|Violent Innovator"],
+["General","Block|Dauntless|Fend|Frenzy|Kick|Pro|Steady Footing|Strip Ball|Sure Hands|Tackle|Taunt|Wrestle"],
+["Mutation","Big Hand|Claws|Disturbing Presence|Extra Arms|Foul Appearance|Horns|Iron Hard Skin|Monstrous Mouth|Prehensile Tail|Tentacles|Two Heads|Very Long Legs"],
+["Passing","Accurate|Cannoneer|Cloud Burster|Dump-off|Give and Go|Hail Mary Pass|Leader|Nerves of Steel|On the Ball|Pass|Punt|Safe Pass"],
+["Strength","Arm Bar|Brawler|Break Tackle|Bullseye|Grab|Guard|Juggernaut|Mighty Blow|Multiple Block|Stand Firm|Strong Arm|Thick Skull"],
+["Traits","Always Hungry|Animal Savagery|Animosity|Ball & Chain|Bloodlust|Bombardier|Bone Head|Breathe Fire|Chainsaw|Decay|Drunkard|Hatred|Hypnotic Gaze|Insignificant|Kick Team-mate|Loner|My Ball|No Ball|Pick-me-up|Plague Ridden|Pogo|Projectile Vomit|Really Stupid|Regeneration|Right Stuff|Secret Weapon|Stab|Stunty|Swoop|Take Root|Throw Team-mate|Timmm-ber!|Titchy|Trickster|Unchannelled Fury|Unsteady"]
+].map(([n,s])=>[n,s.split("|")]);
+
+/* name|cost (K)|skills. Every entry checked against Blood Bowl Base. Edit this block to correct any star. */
+const RAW=`Akhorne the Squirrel|80|Claws;Dauntless;Dodge;Frenzy;Jump Up;Loner (4+);No Ball;Sidestep;Stunty;Titchy
+Anqi Panqi|190|Block;Grab;Loner (4+);Stand Firm;Unsteady
+Barik Farblast|80|Cannoneer;Hail Mary Pass;Loner (4+);Pass;Secret Weapon;Sure Hands;Thick Skull
+Bilerot Vomitflesh|180|Dirty Player;Disturbing Presence;Foul Appearance;Lone Fouler;Loner (4+);Regeneration;Unsteady
+The Black Gobbo|210|Bombardier;Disturbing Presence;Dodge;Loner (3+);Sidestep;Sneaky Git;Stab
+Boa Kon'ssstriktr|180|Dodge;Fend;Hypnotic Gaze;Loner (4+);Prehensile Tail;Safe Pair of Hands;Sidestep
+Bomber Dribblesnot|80|Accurate;Bombardier;Dodge;Loner (4+);Right Stuff;Secret Weapon;Stunty
+Captain Karina von Riesz|230|Bloodlust (2+);Dodge;Hypnotic Gaze;Jump Up;Loner (4+);Regeneration
+Cindy Piewhistle|100|Accurate;Bombardier;Dodge;Loner (4+);Secret Weapon;Stunty
+Count Luthor von Drakenborg|300|Block;Hypnotic Gaze;Loner (4+);Regeneration;Sidestep
+Crumbleberry (Grak and Crumbleberry)|250|Dodge;Lethal Flight;Loner (4+);Right Stuff;Stunty;Sure Hands
+Deeproot Strongbranch|280|Block;Bullseye;Loner (4+);Mighty Blow;Stand Firm;Strong Arm;Thick Skull;Throw Team-mate;Timmm-ber!
+Dribl (Dribl and Drull)|230|Dirty Player;Dodge;Loner (4+);Quick Foul;Sidestep;Sneaky Git;Stunty
+Drull (Dribl and Drull)|230|Dodge;Loner (4+);Sidestep;Stab;Stunty
+Eldril Sidewinder|220|Catch;Dodge;Hypnotic Gaze;Loner (4+);Nerves of Steel;On the Ball
+Estelle la Veneaux|190|Disturbing Presence;Dodge;Guard;Loner (4+);Sidestep
+Fungus the Loon|80|Ball & Chain;Loner (4+);Mighty Blow;No Ball;Secret Weapon;Stunty
+Glart Smashrip|175|Block;Claws;Grab;Juggernaut;Loner (4+);Stand Firm
+Gloriel Summerbloom|150|Accurate;Dodge;Loner (3+);Pass;Sidestep;Sure Hands
+Glotl Stop|260|Animal Savagery;Frenzy;Loner (4+);Mighty Blow;Prehensile Tail;Stand Firm;Thick Skull
+Grak (Grak and Crumbleberry)|250|Bone Head;Kick Team-mate;Loner (4+);Mighty Blow;Thick Skull
+Grashnak Blackhoof|240|Frenzy;Horns;Loner (4+);Mighty Blow;Thick Skull;Unchannelled Fury
+Gretchen Wächter|180|Disturbing Presence;Dodge;Foul Appearance;Jump Up;Loner (4+);No Ball;Regeneration;Shadowing;Sidestep
+Griff Oberwald|300|Block;Dodge;Fend;Loner (3+);Sprint;Sure Feet
+Grim Ironjaw|190|Block;Dauntless;Frenzy;Hatred (Big Guy);Loner (4+);Multiple Block;Thick Skull
+Grombrindal|170|Block;Break Tackle;Dauntless;Loner (4+);Mighty Blow;Stand Firm;Sure Feet;Thick Skull
+Guffle Pusmaw|150|Foul Appearance;Loner (4+);Monstrous Mouth;Nerves of Steel;On the Ball;Plague Ridden
+H'thark the Unstoppable|300|Block;Break Tackle;Defensive;Juggernaut;Loner (4+);Sprint;Sure Feet;Thick Skull;Unsteady
+Hakflem Skuttlespike|200|Dodge;Extra Arms;Loner (4+);Prehensile Tail;Two Heads
+Helmut Wulf|140|Chainsaw;Loner (4+);No Ball;Pro;Secret Weapon;Stand Firm
+Ivan 'the Animal' Deathshroud|210|Block;Disturbing Presence;Hatred (Dwarf);Juggernaut;Loner (4+);Regeneration;Strip Ball;Tackle
+Ivar Eriksson|215|Block;Guard;Loner (4+);Tackle
+Jeremiah Kool|300|Block;Diving Catch;Dodge;Dump-off;Loner (4+);Nerves of Steel;On the Ball;Pass;Sidestep
+Jordell Freshbreeze|280|Block;Diving Catch;Dodge;Leap;Loner (4+);Sidestep;Steady Footing
+Josef Bugman|180|Block;Drunkard;Fend;Loner (3+);Tackle;Taunt;Thick Skull
+Karla von Kill|210|Block;Dauntless;Dodge;Jump Up;Loner (4+)
+Kiroth Krakeneye|160|Disturbing Presence;Foul Appearance;Loner (4+);On the Ball;Tackle;Tentacles
+Kreek Rustgouger|180|Ball & Chain;Loner (4+);Mighty Blow;No Ball;Prehensile Tail;Secret Weapon
+Lord Borak the Despoiler|270|Block;Dirty Player;Leader;Loner (3+);Mighty Blow;Put the Boot In;Sneaky Git
+Lucien Swift (The Swift Twins)|300|Block;Loner (4+);Mighty Blow;Tackle
+Maple Highgrove|210|Brawler;Grab;Loner (4+);Mighty Blow;Stand Firm;Tentacles;Thick Skull
+Max Spleenripper|130|Chainsaw;Loner (4+);No Ball;Secret Weapon
+The Mighty Zug|220|Block;Loner (4+);Mighty Blow;Unsteady
+Morg 'n' Thorg|340|Block;Bullseye;Hatred (Undead);Loner (4+);Mighty Blow;Thick Skull;Throw Team-mate
+Nobbla Blackwart|120|Block;Chainsaw;Dodge;Loner (4+);No Ball;Saboteur;Secret Weapon;Stunty
+Puggy Baconbreath|130|Block;Dodge;Loner (3+);Nerves of Steel;Right Stuff;Stunty
+Rashnak Backstabber|130|Loner (4+);Shadowing;Sidestep;Sneaky Git;Stab
+Ripper Bolgrot|250|Bullseye;Grab;Loner (4+);Mighty Blow;Regeneration;Throw Team-mate
+Rodney Roachbait|70|Catch;Diving Catch;Jump Up;Loner (4+);On the Ball;Sidestep;Stunty;Wrestle
+Rowana Forestfoot|160|Dodge;Dump-off;Guard;Horns;Jump Up;Leap;Loner (4+)
+Roxanna Darknail|270|Dodge;Frenzy;Jump Up;Leap;Loner (4+)
+Rumbelow Sheepskin|170|Block;Horns;Juggernaut;Loner (4+);Tackle;Thick Skull
+Scrappa Sorehead|120|Dirty Player;Dodge;Loner (4+);Pogo;Right Stuff;Sprint;Stunty;Sure Feet
+Scyla Anfingrimm|200|Claws;Frenzy;Loner (4+);Mighty Blow;Prehensile Tail;Thick Skull;Unchannelled Fury
+Skitter Stab-stab|170|Dodge;Loner (4+);Prehensile Tail;Shadowing;Stab
+Skrorg Snowpelt|240|Block;Claws;Disturbing Presence;Juggernaut;Loner (4+);Mighty Blow
+Skrull Halfheight|150|Accurate;Loner (4+);Nerves of Steel;Pass;Regeneration;Sure Hands;Thick Skull
+Swiftvine Glimmershard|110|Disturbing Presence;Fend;Loner (4+);Sidestep;Stab;Stunty
+Thorsson Stoutmead|170|Block;Drunkard;Loner (4+);Thick Skull
+Valen Swift (The Swift Twins)|300|Accurate;Loner (4+);Nerves of Steel;Pass;Safe Pass;Sure Hands
+Varag Ghoul-Chewer|260|Block;Hatred (Undead);Jump Up;Loner (4+);Mighty Blow;Thick Skull;Unsteady
+Wilhelm Chaney|220|Catch;Claws;Frenzy;Loner (4+);Regeneration;Wrestle
+Willow Rosebark|160|Dauntless;Loner (4+);Sidestep;Thick Skull
+Withergrasp Doubledrool|170|Foul Appearance;Loner (4+);Prehensile Tail;Tackle;Tentacles;Two Heads;Wrestle
+Zolcath the Zoat|220|Disturbing Presence;Juggernaut;Loner (4+);Mighty Blow;Prehensile Tail;Regeneration;Sure Feet
+Zzharg Madeye|130|Cannoneer;Hail Mary Pass;Loner (4+);Nerves of Steel;Secret Weapon;Thick Skull`;
+
+const base=s=>s.replace(/\s*\(.*\)$/,"");
+const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const S=RAW.split("\n").map(l=>{const [name,cost,sk]=l.split("|");const list=sk.split(";");
+  const m=name.match(/^(.*?) \((.*)\)$/);
+  return {name:m?m[1]:name,pair:m?m[2]:"",cost:+cost,sk:list,b:list.map(base),v:false}});
+const $=id=>document.getElementById(id);
+const count={};S.forEach(p=>p.b.forEach(b=>count[b]=(count[b]||0)+1));
+$("cats").innerHTML=CATS.map(([n,list])=>`<details open><summary>${n}</summary>${list.map(s=>
+ `<label class="sk${count[s]?"":" z"}" data-n="${esc(s.toLowerCase())}"><input type="checkbox" class="s" value="${esc(s)}"> ${esc(s)}<span class="n">${count[s]||0}</span></label>`).join("")}</details>`).join("");
+const sel=()=>[...document.querySelectorAll(".s:checked")].map(e=>e.value);
+function render(){
+  const s=sel();
+  const rows=S.filter(p=>s.every(x=>p.b.includes(x)));
+  rows.sort($("sort").value==="c"?(a,b)=>a.cost-b.cost||a.name.localeCompare(b.name):(a,b)=>a.name.localeCompare(b.name));
+  $("sum").textContent=`${rows.length} star player${rows.length===1?"":"s"}`;
+  $("tags").innerHTML=s.map(x=>`<span class="tag">${esc(x)}</span>`).join(" ");
+  $("out").innerHTML=rows.length?rows.map(p=>`<article class="card"><h2>${esc(p.name)}<span>${p.cost}K</span></h2>${p.pair?`<div class="sub">${esc(p.pair)}, hired as a pair</div>`:""}<div class="chips">${p.sk.map(k=>`<span class="c${s.includes(base(k))?" hit":""}">${esc(k)}</span>`).join("")}</div></article>`).join("")
+   :'<div class="empty" style="grid-column:1/-1">No star player has that exact combination. Untick one to widen the search.</div>';
+}
+document.addEventListener("change",e=>{if(e.target.classList.contains("s")||e.target.id==="sort")render()});
+$("clr").onclick=()=>{document.querySelectorAll(".s").forEach(c=>c.checked=false);render()};
+$("q").oninput=e=>{const v=e.target.value.trim().toLowerCase();
+  document.querySelectorAll("label.sk").forEach(l=>l.style.display=l.dataset.n.includes(v)?"":"none")};
+$("foot").textContent="Every skill list and price was checked against each star's page on Blood Bowl Base (BB2025 Season 3). Pair stars (Dribl and Drull, Grak and Crumbleberry, The Swift Twins) are listed as separate players at the shared price. Bryce 'the Slice' Cambuel and Frank 'n' Stein are left out because they are not on Blood Bowl Base's current star list.";
+render();
+</script>
+</body>
+</html>
