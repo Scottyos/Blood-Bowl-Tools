@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sideline Shove — Surf Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--turf-dark:#122a1e;--turf:#1b3b2a;--turf-line:#3f6650;--chalk:#eef3ea;--chalk-dim:#a9c2b3;--off:#3ecf72;--off-dim:#1f5c3a;--def:#e7b23e;--danger:#e2574c;--card:#173424;--card-2:#1d3f2b;--move:#7ee8ff;}
+*{box-sizing:border-box;}
+body{margin:0;background:radial-gradient(circle at 50% -10%,#204a34 0%,var(--turf-dark) 55%);color:var(--chalk);font-family:'Inter',sans-serif;padding:18px 12px 60px;min-height:100vh;}
+.wrap{max-width:640px;margin:0 auto;}
+header{text-align:center;margin-bottom:14px;}
+.eyebrow{font-family:'IBM Plex Mono',monospace;letter-spacing:.25em;font-size:11px;color:var(--def);text-transform:uppercase;}
+h1{font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(30px,8vw,42px);letter-spacing:.03em;margin:4px 0 2px;text-shadow:0 2px 0 rgba(0,0,0,.35);}
+.sub{color:var(--chalk-dim);font-size:13px;}
+.tabs{display:flex;gap:6px;margin:16px 0 10px;background:var(--card);border:1px solid var(--turf-line);border-radius:12px;padding:4px;}
+.tab{flex:1;text-align:center;padding:10px 4px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;color:var(--chalk-dim);line-height:1.25;border:1px solid transparent;}
+.tab small{display:block;font-weight:500;font-size:10.5px;opacity:.8;margin-top:1px;}
+.tab.active{background:var(--off-dim);color:#d9ffe6;border-color:var(--off);}
+.opts{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;font-size:12px;color:var(--chalk-dim);margin-bottom:8px;}
+.opts label{display:inline-flex;gap:6px;align-items:center;cursor:pointer;}
+.statusbar{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--chalk-dim);margin:6px 4px 8px;}
+.statusbar b{color:var(--chalk);}
+.hint{text-align:center;font-size:13px;color:var(--chalk);margin:0 0 10px;min-height:20px;}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:11px;color:var(--chalk-dim);margin:12px 0;}
+.legend span{display:inline-flex;align-items:center;gap:5px;}
+.dot{width:11px;height:11px;border-radius:50%;display:inline-block;flex:none;}
+.pitch{background:repeating-linear-gradient(180deg,var(--turf) 0 40px,#1f4530 40px 80px);border:2px solid var(--turf-line);border-radius:14px;padding:12px 8px;box-shadow:inset 0 0 40px rgba(0,0,0,.35),0 8px 24px rgba(0,0,0,.35);overflow-x:auto;}
+.board{display:grid;grid-template-columns:repeat(8,1fr);gap:2px;margin:0 auto;width:max-content;}
+.cell{width:clamp(38px,10.5vw,52px);height:clamp(38px,10.5vw,52px);border:1px solid rgba(238,243,234,.14);border-radius:4px;position:relative;display:flex;align-items:center;justify-content:center;}
+.cell.crowd{background:repeating-linear-gradient(45deg,#2a1d33 0 6px,#35243f 6px 12px);border:1px solid #5b3d6b;border-right:3px solid var(--chalk);}
+.cell .co{position:absolute;font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:rgba(238,243,234,.22);bottom:1px;right:3px;}
+.cell.crowd .co{color:rgba(238,243,234,.35);}
+.cell.psq{background:rgba(231,178,62,.28);border:2px dashed var(--def);cursor:pointer;}
+.cell.rch{background:rgba(126,232,255,.14);border:1px dashed var(--move);cursor:pointer;}
+.cell.rch .co{color:var(--move);font-size:10px;}
+.token{width:78%;height:78%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:clamp(13px,3.6vw,17px);position:relative;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,.4),inset 0 0 0 2px rgba(255,255,255,.08);}
+.token.a{background:var(--off);color:#0a2416;}
+.token.d{background:var(--def);color:#3a2a05;}
+.token.sel{box-shadow:0 0 0 3px var(--chalk),0 0 12px 3px rgba(255,255,255,.55);}
+.token.targ{box-shadow:0 0 0 3px var(--danger),0 0 10px 2px rgba(226,87,76,.7);}
+.token.used{opacity:.45;}
+.token.goal{outline:2px dashed var(--danger);outline-offset:2px;}
+.bd{position:absolute;border:2px solid var(--turf-dark);border-radius:5px;min-width:17px;height:17px;font-size:8.5px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;padding:0 2px;}
+.bd.z{top:-6px;right:-6px;background:#7a4fc9;}
+.bd.b{top:-9px;left:-4px;font-size:13px;border:none;background:none;}
+.chip{position:absolute;bottom:-11px;left:50%;transform:translateX(-50%);z-index:3;font-size:10px;font-weight:800;padding:1px 5px;border-radius:8px;background:var(--turf-dark);border:1px solid var(--chalk);white-space:nowrap;}
+.chip.up{color:var(--off);} .chip.dn{color:var(--danger);} .chip.ev{color:var(--chalk);}
+.feedback{margin-top:14px;background:var(--card);border:1px solid var(--turf-line);border-radius:12px;padding:14px 16px;font-size:13.5px;line-height:1.55;display:none;}
+.feedback.show{display:block;}
+.verdict{font-family:'Anton',sans-serif;font-size:19px;letter-spacing:.02em;margin-bottom:4px;}
+.verdict.ok{color:var(--off);} .verdict.bad{color:var(--danger);}
+.math{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--chalk-dim);}
+.math b{color:var(--chalk);} .math .best{color:var(--move);}
+.controls{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+.btn{flex:1;min-width:90px;padding:12px;border-radius:10px;border:1px solid var(--turf-line);background:var(--card-2);color:var(--chalk);font-weight:700;font-size:14px;cursor:pointer;}
+.btn.primary{background:var(--off);color:#0a2416;border-color:var(--off);}
+.btn:disabled{opacity:.4;cursor:default;}
+.rules{margin-top:16px;font-size:12px;color:var(--chalk-dim);line-height:1.55;background:var(--card);border:1px solid var(--turf-line);border-radius:12px;padding:10px 14px;}
+.rules summary{cursor:pointer;font-weight:700;color:var(--chalk);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Coach's Whiteboard</div>
+    <h1>Sideline Shove</h1>
+    <div class="sub">Surf the ball carrier into the crowd. Move players to close off squares, then chain the pushes.</div>
+  </header>
+
+  <div class="tabs" id="tabs"></div>
+  <div class="opts"><label><input type="checkbox" id="followCb" checked> Attacker follows up on a push</label>
+    <label><input type="checkbox" id="upCb"> Allow uphill blocks (opponent picks dice)</label></div>
+  <div class="statusbar"><span id="stepLabel"></span><span>Solved <b id="scoreLabel">0/0</b></span></div>
+  <div class="hint" id="hint"></div>
+
+  <div class="pitch"><div class="board" id="board"></div></div>
+
+  <div class="legend">
+    <span><span class="dot" style="background:var(--off)"></span>Your players</span>
+    <span><span class="dot" style="background:var(--def)"></span>Opponents</span>
+    <span>🏈 target (ball carrier)</span>
+    <span><span class="dot" style="background:#7a4fc9"></span>Fz Frenzy</span>
+    <span><span class="dot" style="background:var(--move)"></span>Move squares</span>
+    <span><span class="dot" style="background:var(--def)"></span>Push options</span>
+  </div>
+
+  <div class="feedback" id="feedback"></div>
+
+  <div class="controls">
+    <button class="btn" id="doneBtn" disabled>Finish player</button>
+    <button class="btn" id="retryBtn">Retry</button>
+    <button class="btn" id="solBtn">Show solution</button>
+    <button class="btn primary" id="nextBtn">New puzzle</button>
+  </div>
+
+  <details class="rules"><summary>How the rules work here</summary>
+    Tap one of your players. Blue squares are where it can move (M5, no GFIs). There are no dodges: a player can step into an opposing tackle zone, but once it is standing in one it can't move again, so it can only block from there. Tap a red-ringed opponent next to it to block. Uphill blocks (opponent picks the dice) are not allowed, so spare players have to move in and mark the defenders who are giving defensive assists; a ✕ chip shows a blocked-off block. You can switch this off with the checkbox. Block alone = Block action. Move first then block = Blitz (only one per turn, the block costs 1 move, a Frenzy second block costs 1 more). A player who only moves is a Move action. Every block is assumed to be a push; the chip shows the block dice and the real odds of getting a push are shown at the end.<br><br>
+    Pushed players choose an empty square among the three behind them. If none are empty but one is crowd, they go into the crowd. If all three are occupied, the pushed player shoves one of them in turn, which is pushed away from it. Squares outside the view are walls. Frenzy: the first push forces a follow-up, then a second block is made if the target is still on the pitch and that block isn't uphill.
+  </details>
+</div>
+
+<script>
+const R=8,C=7,MA=5,COLS='ABCDEFG';
+const MODES=[
+  {label:'Plain Pushes',sub:'All ST3, no Frenzy',ks:[2,3]},
+  {label:'Frenzy',sub:'All ST3, all Frenzy',ks:[2,4]},
+  {label:'Mixed Squad',sub:'Varied ST, some Frenzy',ks:[2,4]},
+];
+const $=id=>document.getElementById(id);
+const board=$('board'),fb=$('feedback'),hint=$('hint');
+let mode=0,P=[],init=[],K=2,sol=null,act=null,pend=null,blocks=0,blitz=false,over=false,prob=1,follow=true,up=false,reach=new Map();
+let corr=0,att=0,scored=false;
+
+const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=rnd(0,i);[a[i],a[j]]=[a[j],a[i]];}return a;};
+const adj=(a,b)=>a!==b&&Math.abs(a.r-b.r)<=1&&Math.abs(a.c-b.c)<=1;
+const sq=(r,c)=>c<0?'crowd':COLS[c]+(r+1);
+const lab=p=>sq(p.r,p.c);
+const get=id=>P.find(p=>p.id===id);
+const goalOut=Q=>Q.find(p=>p.goal).out===true;
+const clone=Q=>Q.map(p=>({...p}));
+const live=(Q,r,c)=>Q.find(p=>!p.out&&p.r===r&&p.c===c);
+
+/* ---------- rules ---------- */
+function cellType(r,c){if(r<0||r>=R||c>=C)return 'w';return c<0?'o':'b';}
+function opts(Q,t,fr,fc){
+  const sr=Math.sign(t.r-fr),sc=Math.sign(t.c-fc),info=[];
+  for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){
+    if(!dr&&!dc)continue; if(dr*sr+dc*sc<=0)continue;
+    const r=t.r+dr,c=t.c+dc,ty=cellType(r,c);
+    info.push({r,c,ty,occ:ty==='b'?live(Q,r,c):null});
+  }
+  const em=info.filter(x=>x.ty==='b'&&!x.occ);
+  if(em.length)return em.map(x=>({k:'m',r:x.r,c:x.c}));
+  const out=info.filter(x=>x.ty==='o');
+  if(out.length)return out.map(x=>({k:'o',r:x.r,c:x.c}));
+  return info.filter(x=>x.occ).map(x=>({k:'c',o:x.occ.id,r:x.r,c:x.c}));
+}
+function step(Q0,st0,o){
+  const Q=clone(Q0),st=st0.map(e=>({...e}));
+  const t=Q.find(p=>p.id===st[st.length-1].t);
+  if(o.k==='c'){st.push({t:o.o,from:[t.r,t.c]});return {P:Q,st,vac:null};}
+  let V=[t.r,t.c];
+  if(o.k==='m'){t.r=o.r;t.c=o.c;}else{t.out=true;t.r=-9;t.c=-9;}
+  st.pop();
+  while(st.length){const pt=Q.find(p=>p.id===st[st.length-1].t);const nv=[pt.r,pt.c];pt.r=V[0];pt.c=V[1];V=nv;st.pop();}
+  return {P:Q,st,vac:V};
+}
+function calc(Q,a,t){
+  const L=Q.filter(p=>!p.out);
+  const oa=L.filter(p=>p.team==='a'&&p!==a&&adj(p,t)&&!L.some(y=>y.team==='d'&&y!==t&&adj(p,y))).length;
+  const da=L.filter(p=>p.team==='d'&&p!==t&&adj(p,a)&&!L.some(g=>g.team==='a'&&g!==a&&adj(p,g))).length;
+  const o=a.str+oa,d=t.str+da;
+  const n=o===d?1:o>d?(o>2*d?3:2):(d>2*o?-3:-2);
+  return {o,d,n};
+}
+const chance=n=>({1:4/6,2:8/9,3:26/27,'-2':4/9,'-3':8/27})[n];
+const dtxt=n=>n===1?'1':(n>0?'+':'−')+Math.abs(n);
+function marked(Q,p,r,c){return Q.some(o=>!o.out&&o.team!==p.team&&Math.abs(o.r-r)<=1&&Math.abs(o.c-c)<=1);}
+// No dodges: a player may step into an opposing tackle zone, but can't move again once it is in one.
+function reachable(Q,p,maxd){
+  const m=new Map(),seen=new Set([p.r+','+p.c]);let fr=marked(Q,p,p.r,p.c)?[]:[[p.r,p.c]];
+  for(let d=1;d<=maxd;d++){const nx=[];
+    for(const [r,c] of fr)for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){
+      const nr=r+dr,nc=c+dc,k=nr+','+nc;
+      if((!dr&&!dc)||cellType(nr,nc)!=='b'||seen.has(k)||live(Q,nr,nc))continue;
+      seen.add(k);m.set(k,d);if(!marked(Q,p,nr,nc))nx.push([nr,nc]);}
+    fr=nx;}
+  return m;
+}
+function* pushAll(Q,st,d){
+  const top=st[st.length-1],t=Q.find(p=>p.id===top.t),os=opts(Q,t,top.from[0],top.from[1]);
+  if(!os.length){yield {P:clone(Q),vac:null,desc:d+(d?'; ':'')+lab(t)+' stuck'};return;}
+  for(const o of os){
+    const r=step(Q,st,o);
+    const s=o.k==='m'?lab(t)+'→'+sq(o.r,o.c):o.k==='o'?lab(t)+'→crowd':lab(t)+' shoves '+sq(o.r,o.c);
+    const dd=d+(d?'; ':'')+s;
+    if(r.st.length)yield* pushAll(r.P,r.st,dd);else yield {P:r.P,vac:r.vac,desc:dd};
+  }
+}
+function* blockAll(Q,aId,tId,fol,canSecond){
+  const a0=Q.find(p=>p.id===aId),t0=Q.find(p=>p.id===tId),n0=calc(Q,a0,t0).n,pr=chance(n0);
+  if(!up&&n0<1)return;
+  for(const r of pushAll(Q,[{t:tId,from:[a0.r,a0.c]}],'')){
+    const P2=r.P,a=P2.find(p=>p.id===aId);
+    if(r.vac&&(fol||a.fz)){a.r=r.vac[0];a.c=r.vac[1];}
+    const t=P2.find(p=>p.id===tId);
+    if(a.fz&&canSecond&&!t.out&&adj(a,t)&&(up||calc(P2,a,t).n>=1)){
+      const p2=chance(calc(P2,a,t).n);
+      for(const r2 of pushAll(P2,[{t:tId,from:[a.r,a.c]}],'')){
+        const a3=r2.P.find(p=>p.id===aId);
+        if(r2.vac&&fol){a3.r=r2.vac[0];a3.c=r2.vac[1];}
+        yield {P:r2.P,desc:r.desc+', then '+r2.desc,blocks:2,pr:pr*p2};
+      }
+    }else yield {P:P2,desc:r.desc,blocks:1,pr};
+  }
+}
+
+/* ---------- solver (Block actions plus optionally one Move action) ---------- */
+let deadline=0;
+const tick=()=>{if(performance.now()>deadline)throw 0;};
+function solve(Q,k,mv,line){
+  tick();
+  if(goalOut(Q))return line;
+  if(k===0)return null;
+  const att=shuffle(Q.filter(p=>p.team==='a'&&!p.used&&!p.out));
+  for(const a of att)for(const t of Q.filter(p=>p.team==='d'&&!p.out&&adj(a,p))){
+    for(const r of blockAll(Q,a.id,t.id,follow,true)){
+      tick();
+      if(r.blocks>k)continue;
+      r.P.find(p=>p.id===a.id).used=true;
+      const res=solve(r.P,k-r.blocks,mv,line.concat(lab(a)+' blocks '+lab(t)+': '+r.desc));
+      if(res)return res;
+    }
+  }
+  if(mv>0){
+    const g=Q.find(p=>p.goal);
+    for(const a of att){
+      for(const [key,d] of reachable(Q,a,MA)){
+        const [r,c]=key.split(',').map(Number);
+        if(Math.max(Math.abs(r-g.r),Math.abs(c-g.c))>2)continue;
+        tick();
+        const Q2=clone(Q),a2=Q2.find(p=>p.id===a.id);
+        a2.r=r;a2.c=c;a2.used=true;
+        const res=solve(Q2,k,mv-1,line.concat('Move '+lab(a)+' to '+sq(r,c)));
+        if(res)return res;
+      }
+    }
+  }
+  return null;
+}
+function trySolve(Q,k,mv,ms){deadline=performance.now()+ms;try{return solve(clone(Q),k,mv,[]);}catch(e){return null;}}
+
+/* ---------- puzzle ---------- */
+const pickStr=()=>{const x=Math.random()*100;return x<15?2:x<65?3:x<90?4:5;};
+function gen(){
+  const pl=[],taken=new Set();let id=0;
+  const place=(cmax)=>{for(;;){const r=rnd(0,R-1),c=rnd(0,cmax),k=r+','+c;if(!taken.has(k)){taken.add(k);return [r,c];}}};
+  const gr=rnd(2,R-3),gc=rnd(0,1);taken.add(gr+','+gc);
+  const mk=(team,r,c,goal)=>pl.push({id:id++,team,r,c,goal:!!goal,out:false,used:false,
+    str:mode===2?pickStr():3,fz:team==='a'&&(mode===1||(mode===2&&Math.random()<.35))});
+  mk('d',gr,gc,true);
+  for(let i=rnd(3,5);i>0;i--){const [r,c]=place(3);mk('d',r,c);}
+  for(let i=rnd(4,6);i>0;i--){const [r,c]=place(5);mk('a',r,c);}
+  return pl;
+}
+function load(){
+  scored=false;
+  const ks=MODES[mode].ks,t0=performance.now();
+  let found=null,last=null;
+  while(performance.now()-t0<2500&&!found){
+    K=rnd(ks[0],ks[1]);last={K,P:gen()};
+    if(trySolve(last.P,K,0,40))continue;
+    const s=trySolve(last.P,K,1,90)||trySolve(last.P,K,2,160);
+    if(s)found={K,P:last.P,s};
+  }
+  const f=found||last;K=f.K;init=f.P;sol=found?found.s:null;
+  reset();
+}
+function reset(){
+  P=clone(init);act=null;pend=null;blocks=0;blitz=false;over=false;prob=1;
+  fb.className='feedback';fb.innerHTML='';render();
+}
+
+/* ---------- render ---------- */
+function curOpts(){const top=pend.stack[pend.stack.length-1];return opts(P,get(top.t),top.from[0],top.from[1]);}
+function canBlock(){return act&&(act.used===0||(!blitz&&MA-act.used>=1))&&blocks<K;}
+function render(){
+  board.innerHTML='';
+  const a=act?get(act.id):null,po=pend?curOpts():[];
+  const tg=new Set(),bad=new Set();
+  if(a&&!pend&&canBlock())P.forEach(p=>{if(p.team==='d'&&!p.out&&adj(a,p)){if(up||calc(P,a,p).n>=1)tg.add(p.id);else bad.add(p.id);}});
+  reach=a&&!pend?reachable(P,a,MA-act.used):new Map();
+  for(let r=0;r<R;r++)for(let c=-1;c<C;c++){
+    const cell=document.createElement('div');
+    cell.className='cell'+(c<0?' crowd':'');
+    cell.innerHTML=`<span class="co">${c<0?'crowd':COLS[c]+(r+1)}</span>`;
+    if(po.some(o=>(o.k==='m'||o.k==='o')&&o.r===r&&o.c===c))cell.classList.add('psq');
+    const rd=reach.get(r+','+c);
+    if(rd){cell.classList.add('rch');cell.innerHTML=`<span class="co">${rd}</span>`;}
+    const p=live(P,r,c);
+    if(p){
+      const t=document.createElement('div');
+      const chain=po.some(o=>o.k==='c'&&o.o===p.id);
+      t.className='token '+p.team+(a&&p.id===a.id?' sel':'')+(tg.has(p.id)||chain?' targ':'')+(p.used?' used':'')+(p.goal?' goal':'');
+      let h=p.str;
+      if(p.goal)h+='<span class="bd b">🏈</span>';
+      if(p.fz)h+='<span class="bd z">Fz</span>';
+      if(tg.has(p.id)){const n=calc(P,a,p).n;h+=`<span class="chip ${n===1?'ev':n>0?'up':'dn'}">${dtxt(n)}</span>`;}
+      if(bad.has(p.id)){h+=`<span class="chip dn">✕ ${dtxt(calc(P,a,p).n)}</span>`;}
+      t.innerHTML=h;cell.appendChild(t);
+    }
+    cell.onclick=()=>click(r,c);
+    board.appendChild(cell);
+  }
+  $('scoreLabel').textContent=`${corr}/${att}`;
+  $('stepLabel').textContent=`Blocks ${blocks} of ${K} · Blitz ${blitz?'used':'ready'}`;
+  $('doneBtn').disabled=!act||!!pend||over;
+  hint.textContent=over?'':
+    pend?(po.some(o=>o.k==='c')?'All three squares are full. Tap a red-ringed player for the pushed player to shove.':'Tap a glowing square to push there.'):
+    act?(act.used>0?`Moves left ${MA-act.used}. Tap a red-ringed opponent to Blitz, or Finish player. (A player in a tackle zone can't move on.)`:'Tap a blue square to move, or a red-ringed opponent to block.'):
+    'Tap one of your players to activate it.';
+}
+
+/* ---------- interaction ---------- */
+function click(r,c){
+  if(over)return;
+  if(pend)return handlePend(r,c);
+  const p=live(P,r,c);
+  if(act){
+    const a=get(act.id);
+    if(p&&p.id===act.id)return endAct();
+    if(!p){const d=reach.get(r+','+c);if(d){a.r=r;a.c=c;act.used+=d;render();}return;}
+    if(p.team==='d'&&adj(a,p)&&canBlock()){if(!up&&calc(P,a,p).n<1){hint.textContent='That block is uphill. Move a player to mark the defenders helping them first.';return;}return startBlock(a,p);}
+    if(p.team==='a'&&!p.used){endAct();act={id:p.id,used:0};render();}
+    return;
+  }
+  if(p&&p.team==='a'&&!p.used){act={id:p.id,used:0};render();}
+}
+function endAct(){if(act&&act.used>0)get(act.id).used=true;act=null;render();}
+function startBlock(a,t){
+  blocks++;prob*=chance(calc(P,a,t).n);
+  pend={aId:a.id,tId:t.id,stack:[{t:t.id,from:[a.r,a.c]}],second:false,blitz:act.used>0,mp:MA-act.used-1};
+  if(!curOpts().length)return complete(null);
+  render();
+}
+function handlePend(r,c){
+  const o=curOpts().find(x=>x.r===r&&x.c===c);
+  if(!o)return;
+  const res=step(P,pend.stack,o);
+  P=res.P;
+  if(res.st.length){pend.stack=res.st;render();}else complete(res.vac);
+}
+function complete(vac){
+  const a=get(pend.aId),t=get(pend.tId);
+  if(vac&&(pend.second?follow:(follow||a.fz))){a.r=vac[0];a.c=vac[1];}
+  if(goalOut(P)){a.used=true;if(pend.blitz)blitz=true;pend=null;act=null;return end(true);}
+  const okMp=!pend.blitz||pend.mp>=1;
+  if(a.fz&&!pend.second&&!t.out&&adj(a,t)&&okMp&&(up||calc(P,a,t).n>=1)){
+    pend.second=true;blocks++;prob*=chance(calc(P,a,t).n);
+    if(pend.blitz)pend.mp--;
+    pend.stack=[{t:t.id,from:[a.r,a.c]}];
+    if(!curOpts().length)return complete(null);
+    return render();
+  }
+  a.used=true;if(pend.blitz)blitz=true;pend=null;act=null;
+  if(blocks>=K)return end(false);
+  render();
+}
+function end(win){
+  over=true;
+  if(!scored){scored=true;att++;if(win)corr++;}
+  render();
+  fb.className='feedback show';
+  fb.innerHTML=win?
+   `<div class="verdict ok">Out of bounds.</div><div class="math">Ball carrier into the crowd using <b>${blocks}</b> block${blocks>1?'s':''} (limit ${K}).<br>Odds that every block gives a push: <b>${Math.round(prob*1000)/10}%</b> (Both Down and Attacker Down count as misses).</div>`:
+   `<div class="verdict bad">Out of blocks.</div><div class="math">The ball carrier is still on the pitch. Retry the same layout or show a solution.</div>`;
+}
+function showSol(){
+  if(!over){if(!scored){scored=true;att++;}}
+  fb.className='feedback show';
+  fb.innerHTML=sol?`<div class="verdict ok">One way to do it</div><div class="math"><span class="best">${sol.map((s,i)=>`${i+1}. ${s}`).join('<br>')}</span><br><br>Limit ${K} blocks. Pushes shown are the pushed player's choices.</div>`:
+    `<div class="verdict bad">No verified solution</div><div class="math">This layout wasn't checked as solvable. Tap New puzzle.</div>`;
+}
+
+/* ---------- wiring ---------- */
+function initTabs(){
+  const t=$('tabs');t.innerHTML='';
+  MODES.forEach((m,i)=>{
+    const d=document.createElement('div');
+    d.className='tab'+(i===mode?' active':'');
+    d.innerHTML=`${m.label}<small>${m.sub}</small>`;
+    d.onclick=()=>{if(i!==mode){mode=i;initTabs();load();}};
+    t.appendChild(d);
+  });
+}
+$('nextBtn').onclick=load;
+$('retryBtn').onclick=reset;
+$('solBtn').onclick=showSol;
+$('doneBtn').onclick=endAct;
+$('followCb').onchange=e=>{follow=e.target.checked;load();};
+$('upCb').onchange=e=>{up=e.target.checked;load();};
+initTabs();load();
+</script>
+</body>
+</html>
