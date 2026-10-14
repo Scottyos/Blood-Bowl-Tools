@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Line of Scrimmage — Best Block Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--turf-dark:#122a1e;--turf:#1b3b2a;--turf-line:#3f6650;--chalk:#eef3ea;--chalk-dim:#a9c2b3;--off:#3ecf72;--off-dim:#1f5c3a;--def:#e7b23e;--danger:#e2574c;--card:#173424;--card-2:#1d3f2b;}
+*{box-sizing:border-box;}
+body{margin:0;background:radial-gradient(circle at 50% -10%,#204a34 0%,var(--turf-dark) 55%);color:var(--chalk);font-family:'Inter',sans-serif;padding:18px 12px 60px;min-height:100vh;}
+.wrap{max-width:640px;margin:0 auto;}
+header{text-align:center;margin-bottom:14px;}
+.eyebrow{font-family:'IBM Plex Mono',monospace;letter-spacing:.25em;font-size:11px;color:var(--def);text-transform:uppercase;}
+h1{font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(30px,8vw,42px);letter-spacing:.03em;margin:4px 0 2px;text-shadow:0 2px 0 rgba(0,0,0,.35);}
+.sub{color:var(--chalk-dim);font-size:13px;}
+.tabs{display:flex;gap:6px;margin:16px 0 10px;background:var(--card);border:1px solid var(--turf-line);border-radius:12px;padding:4px;}
+.tab{flex:1;text-align:center;padding:10px 4px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;color:var(--chalk-dim);line-height:1.25;border:1px solid transparent;}
+.tab small{display:block;font-weight:500;font-size:10.5px;opacity:.8;margin-top:1px;}
+.tab.active{background:var(--off-dim);color:#d9ffe6;border-color:var(--off);}
+.opts{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;font-size:12px;color:var(--chalk-dim);margin-bottom:8px;}
+.opts label{display:inline-flex;gap:6px;align-items:center;cursor:pointer;}
+.statusbar{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--chalk-dim);margin:6px 4px 8px;}
+.statusbar b{color:var(--chalk);}
+.hint{text-align:center;font-size:13px;color:var(--chalk);margin:0 0 10px;min-height:20px;}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:11px;color:var(--chalk-dim);margin:12px 0;}
+.legend span{display:inline-flex;align-items:center;gap:5px;}
+.dot{width:11px;height:11px;border-radius:50%;display:inline-block;flex:none;}
+.pitch{background:repeating-linear-gradient(180deg,var(--turf) 0 40px,#1f4530 40px 80px);border:2px solid var(--turf-line);border-radius:14px;padding:12px 8px;box-shadow:inset 0 0 40px rgba(0,0,0,.35),0 8px 24px rgba(0,0,0,.35);overflow-x:auto;}
+.board{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin:0 auto;width:max-content;}
+.cell{width:clamp(38px,11vw,54px);height:clamp(38px,11vw,54px);border:1px solid rgba(238,243,234,.14);border-radius:4px;position:relative;display:flex;align-items:center;justify-content:center;}
+.cell.los{border-bottom:2px solid rgba(238,243,234,.7);}
+.cell .co{position:absolute;font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:rgba(238,243,234,.22);bottom:1px;right:3px;}
+.cell.psq{background:rgba(231,178,62,.28);border:2px dashed var(--def);cursor:pointer;}
+.token{width:78%;height:78%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:clamp(13px,3.6vw,17px);position:relative;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,.4),inset 0 0 0 2px rgba(255,255,255,.08);}
+.token.off{background:var(--off);color:#0a2416;}
+.token.def{background:var(--def);color:#3a2a05;}
+.token.sel{box-shadow:0 0 0 3px var(--chalk),0 0 12px 3px rgba(255,255,255,.55);}
+.token.targ{box-shadow:0 0 0 3px var(--danger),0 0 10px 2px rgba(226,87,76,.7);}
+.token.used{opacity:.5;}
+.token.down{opacity:.35;filter:grayscale(.7);box-shadow:none;}
+.token.asst{box-shadow:0 0 0 3px #fff,0 0 10px 2px rgba(255,255,255,.6);}
+.token.bestb{box-shadow:0 0 0 3px #7ee8ff,0 0 12px 3px rgba(126,232,255,.7);}
+.bd{position:absolute;border:2px solid var(--turf-dark);border-radius:5px;min-width:17px;height:17px;font-size:8.5px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;padding:0 2px;}
+.bd.g{bottom:-6px;right:-6px;background:#7a4fc9;}
+.bd.d{bottom:-6px;left:-6px;background:#2f7fc9;}
+.bd.k{top:-6px;left:-6px;background:#c9482f;}
+.bd.z{top:-6px;right:-6px;background:#c98a1f;}
+.chip{position:absolute;bottom:-11px;left:50%;transform:translateX(-50%);z-index:3;font-size:10px;font-weight:800;padding:1px 5px;border-radius:8px;background:var(--turf-dark);border:1px solid var(--chalk);white-space:nowrap;}
+.chip.up{color:var(--off);} .chip.dn{color:var(--danger);} .chip.ev{color:var(--chalk);}
+.feedback{margin-top:14px;background:var(--card);border:1px solid var(--turf-line);border-radius:12px;padding:14px 16px;font-size:13.5px;line-height:1.55;display:none;}
+.feedback.show{display:block;}
+.verdict{font-family:'Anton',sans-serif;font-size:19px;letter-spacing:.02em;margin-bottom:4px;}
+.verdict.ok{color:var(--off);} .verdict.bad{color:var(--danger);}
+.math{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--chalk-dim);}
+.math b{color:var(--chalk);}
+.math .best{color:#7ee8ff;}
+.math .mine{color:var(--def);}
+.controls{display:flex;gap:8px;margin-top:14px;}
+.btn{flex:1;padding:12px;border-radius:10px;border:1px solid var(--turf-line);background:var(--card-2);color:var(--chalk);font-weight:700;font-size:14px;cursor:pointer;}
+.btn.primary{background:var(--off);color:#0a2416;border-color:var(--off);}
+.btn:disabled{opacity:.4;cursor:default;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Coach's Whiteboard</div>
+    <h1>Line of Scrimmage</h1>
+    <div class="sub">Two lines pressed together. Find the best block, then chain pushes to set up the next one.</div>
+  </header>
+
+  <div class="tabs" id="tabs"></div>
+  <div class="opts" id="opts">
+    <label><input type="checkbox" id="followCb" checked> Attacker follows up on a push</label>
+    <label id="prevLbl"><input type="checkbox" id="prevCb" checked> Show dice on targets</label>
+  </div>
+  <div class="statusbar"><span id="stepLabel"></span><span>Score <b id="scoreLabel">0/0</b></span></div>
+  <div class="hint" id="hint"></div>
+
+  <div class="pitch"><div class="board" id="board"></div></div>
+
+  <div class="legend">
+    <span><span class="dot" style="background:var(--off)"></span>Offense (blocks)</span>
+    <span><span class="dot" style="background:var(--def)"></span>Defense</span>
+    <span><span class="dot" style="background:#7a4fc9"></span>G Guard</span>
+    <span><span class="dot" style="background:#2f7fc9"></span>D Defensive</span>
+    <span><span class="dot" style="background:#c9482f"></span>Bk Block</span>
+    <span><span class="dot" style="background:#c98a1f"></span>Dg Dodge</span>
+    <span>+N you pick &nbsp; −N opponent picks &nbsp; faded = down or already blocked</span>
+  </div>
+
+  <div class="feedback" id="feedback"></div>
+
+  <div class="controls">
+    <button class="btn" id="retryBtn">Retry</button>
+    <button class="btn" id="endBtn" disabled>End turn</button>
+    <button class="btn" id="skipBtn">Skip</button>
+    <button class="btn primary" id="nextBtn" disabled>Next puzzle</button>
+  </div>
+</div>
+
+<script>
+const R=6, C=7, COLS='ABCDEFG';
+const MODES=[
+  {k:1,label:'Best Block',sub:'Find the most dice'},
+  {k:2,label:'2-Block Chain',sub:'Push, then hit again'},
+  {k:3,label:'3-Block Chain',sub:'Plan a full drive'},
+];
+// Approximate share of BB2025 positionals by ST: 1:2% 2:10% 3:55% 4:22% 5:9% 6:1% 7:1%
+const STR_WEIGHTS=[[1,2],[2,10],[3,55],[4,22],[5,9],[6,1],[7,1]];
+function pickStr(cnt){
+  for(;;){
+    let x=Math.random()*100,s=3;
+    for(const [v,w] of STR_WEIGHTS){if((x-=w)<0){s=v;break;}}
+    if(s>=5&&cnt.big>=2)continue;   // realistic: at most 2 Big Guys / ST5+ per team
+    if(s===1&&cnt.one>=1)continue;  // and at most 1 ST1
+    if(s>=5)cnt.big++; if(s===1)cnt.one++;
+    return s;
+  }
+}
+const $=id=>document.getElementById(id);
+const board=$('board'),fb=$('feedback'),hint=$('hint'),nextBtn=$('nextBtn'),endBtn=$('endBtn'),retryBtn=$('retryBtn');
+
+let mode=0,S=[],init=[],sel=null,phase='pick',sqs=[],atk=null,tgt=null,step=0,total=0,best1=null,log=[];
+let asst=new Set(),bestIds=new Set(),corr=0,att=0,scored=false,follow=true,prev=true;
+
+const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=rnd(0,i);[a[i],a[j]]=[a[j],a[i]];}return a;};
+const adj=(a,b)=>a!==b&&Math.abs(a.row-b.row)<=1&&Math.abs(a.col-b.col)<=1;
+const lab=p=>COLS[p.col]+(p.row+1);
+const pt=n=>({3:3,2:2,1:0,'-2':-1,'-3':-2})[n];
+const dt=n=>n===1?'1 die (even)':Math.abs(n)+' dice, '+(n>0?'you pick':'opp. picks');
+
+/* ---------- rules ---------- */
+function marked(L,p){return L.some(d=>d.team==='def'&&d.defensive&&adj(p,d));}
+function calc(S,a,t){
+  const L=S.filter(p=>!p.down);
+  const offA=L.filter(p=>p.team==='off'&&p!==a&&adj(p,t)&&((p.guard&&!marked(L,p))||!L.some(y=>y.team==='def'&&y!==t&&adj(p,y))));
+  const defA=L.filter(p=>p.team==='def'&&p!==t&&adj(p,a)&&(p.guard||!L.some(g=>g.team==='off'&&g!==a&&adj(p,g))));
+  const negated=L.filter(p=>p.team==='off'&&p!==a&&adj(p,t)&&p.guard&&marked(L,p)&&L.some(y=>y.team==='def'&&y!==t&&adj(p,y)));
+  const o=a.str+offA.length,d=t.str+defA.length;
+  let n;
+  if(o===d)n=1; else if(o>d)n=o>2*d?3:2; else n=d>2*o?-3:-2;
+  return {o,d,n,offA,defA,negated};
+}
+function blocks(S){
+  const out=[];
+  S.forEach(a=>{if(a.team!=='off'||a.down||a.used)return;
+    S.forEach(t=>{if(t.team==='def'&&!t.down&&adj(a,t))out.push([a,t]);});});
+  return out;
+}
+function pushSq(S,a,t){
+  const sr=Math.sign(t.row-a.row),sc=Math.sign(t.col-a.col),out=[];
+  for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){
+    if(!dr&&!dc)continue;
+    if(dr*sr+dc*sc<=0)continue;
+    const r=t.row+dr,c=t.col+dc;
+    if(r<0||r>=R||c<0||c>=C)continue;
+    if(S.some(p=>p.row===r&&p.col===c))continue;
+    out.push({row:r,col:c});
+  }
+  return out;
+}
+function apply(S,a,t,sq,fol){
+  const N=S.map(p=>({...p}));
+  const A=N.find(p=>p.id===a.id),T=N.find(p=>p.id===t.id);
+  A.used=true;
+  if(sq){const old={row:T.row,col:T.col};T.row=sq.row;T.col=sq.col;if(fol){A.row=old.row;A.col=old.col;}}
+  else T.down=true;
+  return N;
+}
+// chance the target goes down (no turnover), used to rank ties
+function kd(a,t,n){
+  const p=1/6+(t.dodge?0:1/6)+((a.block&&!t.block)?1/6:0);
+  const m=Math.abs(n);
+  return n>0?1-Math.pow(1-p,m):Math.pow(p,m);
+}
+// exhaustive search for the best sequence of k blocks (pushes only; stuck targets fall over)
+function best(S,k,fol){
+  if(k===0)return {pts:0,line:[]};
+  let top={pts:0,line:[]};
+  for(const [a,t] of blocks(S)){
+    const c=calc(S,a,t);
+    const sqsL=pushSq(S,a,t);
+    for(const sq of (sqsL.length?sqsL:[null])){
+      const r=best(apply(S,a,t,sq,fol),k-1,fol);
+      const pts=pt(c.n)+r.pts;
+      if(pts>top.pts)top={pts,line:[{a:lab(a),t:lab(t),o:c.o,d:c.d,n:c.n,sq:sq?lab(sq):null},...r.line]};
+    }
+  }
+  return top;
+}
+const lineTxt=e=>`${e.a}→${e.t}: ${e.o} v ${e.d}, ${dt(e.n)}, ${e.sq?'push to '+e.sq:'knockdown'}`;
+
+/* ---------- puzzle ---------- */
+// Skills: ~45% of players have none, ~42% one, ~13% two (never more than two of the four).
+// Weights are an estimate of how often each shows up on rosters.
+const SKILL_W={block:40,dodge:32,guard:18,defensive:10};
+function pickSkills(team){
+  const x=Math.random(),n=x<.45?0:x<.87?1:2;
+  const out={block:false,dodge:false,guard:false,defensive:false};
+  const pool=Object.keys(SKILL_W).filter(k=>k!=='defensive'||team==='def');
+  for(let i=0;i<n;i++){
+    const left=pool.filter(k=>!out[k]);
+    let r=Math.random()*left.reduce((a,k)=>a+SKILL_W[k],0);
+    for(const k of left){if((r-=SKILL_W[k])<0){out[k]=true;break;}}
+  }
+  return out;
+}
+function gen(){
+  const pl=[];let id=0;
+  const cnt={off:{big:0,one:0},def:{big:0,one:0}};
+  const add=(team,row,col)=>pl.push({id:id++,team,row,col,
+    str:pickStr(cnt[team]),
+    ...pickSkills(team),down:false,used:false});
+  const cols=[0,1,2,3,4,5,6];
+  shuffle(cols.slice()).slice(0,rnd(4,6)).forEach(c=>add('def',2,c));
+  shuffle(cols.slice()).slice(0,rnd(4,6)).forEach(c=>add('off',3,c));
+  const back=(team,rows,n)=>{const cells=[];rows.forEach(r=>cols.forEach(c=>cells.push([r,c])));
+    shuffle(cells).slice(0,n).forEach(([r,c])=>add(team,r,c));};
+  back('def',[0,1],rnd(1,3));
+  back('off',[4,5],rnd(1,3));
+  return pl;
+}
+function load(){
+  scored=false;
+  const K=MODES[mode].k;
+  if(mode>0){let tries=0,b;do{init=gen();b=best(init,K,follow);tries++;}while(b.pts<K+1&&tries<40);best1=b;}
+  else init=gen();
+  reset();
+}
+function reset(){
+  S=init.map(p=>({...p}));
+  sel=null;phase='pick';sqs=[];step=0;total=0;log=[];asst=new Set();bestIds=new Set();
+  fb.className='feedback';fb.innerHTML='';
+  nextBtn.disabled=!scored;
+  endBtn.style.display=retryBtn.style.display=mode>0?'':'none';
+  endBtn.disabled=true;
+  $('prevLbl').style.display=mode>0?'':'none';
+  $('followCb').parentElement.style.display=mode>0?'':'none';
+  render();
+}
+
+/* ---------- render ---------- */
+function render(){
+  const K=MODES[mode].k;
+  board.innerHTML='';
+  const tg=new Set();
+  if(phase==='pick'&&sel)blocks(S).forEach(b=>{if(b[0]===sel)tg.add(b[1].id);});
+  for(let r=0;r<R;r++)for(let c=0;c<C;c++){
+    const cell=document.createElement('div');
+    cell.className='cell'+(r===2?' los':'');
+    cell.innerHTML=`<span class="co">${COLS[c]}${r+1}</span>`;
+    if(phase==='push'&&sqs.some(s=>s.row===r&&s.col===c))cell.classList.add('psq');
+    const p=S.find(x=>x.row===r&&x.col===c);
+    if(p){
+      const t=document.createElement('div');
+      t.className='token '+p.team+(p===sel?' sel':'')+(tg.has(p.id)?' targ':'')+(p.used?' used':'')+(p.down?' down':'')+(asst.has(p.id)?' asst':'')+(bestIds.has(p.id)?' bestb':'');
+      let h=p.str;
+      if(p.block)h+='<span class="bd k">Bk</span>';
+      if(p.dodge)h+='<span class="bd z">Dg</span>';
+      if(p.guard)h+='<span class="bd g">G</span>';
+      if(p.defensive)h+='<span class="bd d">D</span>';
+      if(mode>0&&prev&&tg.has(p.id)){
+        const n=calc(S,sel,p).n;
+        h+=`<span class="chip ${n===1?'ev':n>0?'up':'dn'}">${n===1?'1':(n>0?'+':'−')+Math.abs(n)}</span>`;
+      }
+      t.innerHTML=h;
+      cell.appendChild(t);
+    }
+    cell.onclick=()=>clickCell(r,c);
+    board.appendChild(cell);
+  }
+  $('scoreLabel').textContent=`${corr}/${att}`;
+  $('stepLabel').textContent=mode===0?'Pick one block':`Block ${Math.min(step+1,K)} of ${K} · Points ${total}`;
+  hint.textContent=phase==='done'?'':
+    phase==='push'?`Tap a glowing square to push ${lab(tgt)} back.`:
+    sel?`Now tap the defender (red ring) to hit with ${lab(sel)}.`:
+    mode===0?'Tap an attacker, then a defender. Which block gets the most dice?':'Tap an attacker to start your drive.';
+}
+
+/* ---------- interaction ---------- */
+function clickCell(r,c){
+  if(phase==='done')return;
+  if(phase==='push'){const s=sqs.find(q=>q.row===r&&q.col===c);if(s)doPush(s);return;}
+  const p=S.find(x=>x.row===r&&x.col===c);
+  if(!p)return;
+  if(p.team==='off'&&!p.down&&!p.used&&blocks(S).some(b=>b[0]===p)){sel=p;render();return;}
+  if(sel&&p.team==='def'&&!p.down&&adj(sel,p))chooseBlock(sel,p);
+}
+function chooseBlock(a,t){
+  if(mode===0)return revealSingle(a,t);
+  const c=calc(S,a,t);
+  const e={a:lab(a),t:lab(t),o:c.o,d:c.d,n:c.n,sq:null};
+  log.push(e);total+=pt(c.n);
+  atk=a;tgt=t;
+  sqs=pushSq(S,a,t);
+  if(!sqs.length){S=apply(S,a,t,null,follow);after();}
+  else{phase='push';render();}
+}
+function doPush(sq){
+  log[log.length-1].sq=COLS[sq.col]+(sq.row+1);
+  S=apply(S,atk,tgt,sq,follow);
+  after();
+}
+function after(){
+  step++;sel=null;sqs=[];phase='pick';
+  endBtn.disabled=false;
+  if(step>=MODES[mode].k||!blocks(S).length)return finish();
+  render();
+}
+
+/* ---------- results ---------- */
+function revealSingle(a,t){
+  phase='done';
+  const all=blocks(S).map(([x,y])=>({x,y,c:calc(S,x,y)}));
+  const mine=all.find(b=>b.x===a&&b.y===t);
+  const top=Math.max(...all.map(b=>pt(b.c.n)));
+  const ties=all.filter(b=>pt(b.c.n)===top);
+  const bestKd=Math.max(...ties.map(b=>kd(b.x,b.y,b.c.n)));
+  const ok=pt(mine.c.n)===top;
+  const myKd=kd(a,t,mine.c.n);
+  const note=ok&&myKd<bestKd-0.001?`<br>Same dice, but another tied block has a better knockdown chance (${Math.round(bestKd*100)}% vs your ${Math.round(myKd*100)}%) once Block and Dodge are counted.`:'';
+  scoreIt(ok);
+  asst=new Set([...mine.c.offA,...mine.c.defA].map(p=>p.id));
+  ties.forEach(b=>{bestIds.add(b.x.id);bestIds.add(b.y.id);});
+  const rows=all.sort((p,q)=>pt(q.c.n)-pt(p.c.n)).map(b=>{
+    const cls=b===mine?'mine':ties.includes(b)?'best':'';
+    return `<span class="${cls}">${lab(b.x)}→${lab(b.y)}: ${b.c.o} v ${b.c.d}, ${dt(b.c.n)}${b===mine?' ◄ yours':''}</span>`;
+  }).join('<br>');
+  const neg=mine.c.negated.length?`<br>Defensive cancelled ${mine.c.negated.length} Guard assist${mine.c.negated.length>1?'s':''}.`:'';
+  fb.className='feedback show';
+  fb.innerHTML=`<div class="verdict ${ok?'ok':'bad'}">${ok?'Best block found.':'There was a better block.'}</div>
+    <div class="math">Your block ${lab(a)}→${lab(t)}: ST<b>${a.str}</b> + ${mine.c.offA.length} assist${mine.c.offA.length===1?'':'s'} = <b>${mine.c.o}</b> vs ST<b>${t.str}</b> + ${mine.c.defA.length} = <b>${mine.c.d}</b>${neg}${note}<br><br>
+    Every block, best first (cyan rings = best):<br>${rows}</div>`;
+  nextBtn.disabled=false;
+  render();
+}
+function finish(){
+  phase='done';endBtn.disabled=true;
+  const ok=total===best1.pts;
+  scoreIt(ok);
+  const mineTxt=log.length?log.map((e,i)=>`${i+1}. ${lineTxt(e)}`).join('<br>'):'No blocks made.';
+  const bestTxt=best1.line.map((e,i)=>`${i+1}. ${lineTxt(e)}`).join('<br>');
+  fb.className='feedback show';
+  fb.innerHTML=`<div class="verdict ${ok?'ok':'bad'}">${ok?'Best drive found.':'A better drive was available.'}</div>
+    <div class="math">Points: dice are worth +3 (3 you pick), +2 (2 you pick), 0 (even), −1 (2 opp.), −2 (3 opp.).<br><br>
+    <span class="mine">Your line — ${total} pts</span><br>${mineTxt}<br><br>
+    <span class="best">Best line — ${best1.pts} pts</span><br>${bestTxt}</div>`;
+  nextBtn.disabled=false;
+  render();
+}
+function scoreIt(ok){if(scored)return;scored=true;att++;if(ok)corr++;}
+
+/* ---------- wiring ---------- */
+function initTabs(){
+  const t=$('tabs');t.innerHTML='';
+  MODES.forEach((m,i)=>{
+    const d=document.createElement('div');
+    d.className='tab'+(i===mode?' active':'');
+    d.innerHTML=`${m.label}<small>${m.sub}</small>`;
+    d.onclick=()=>{if(i!==mode){mode=i;initTabs();load();}};
+    t.appendChild(d);
+  });
+}
+nextBtn.onclick=load;
+$('skipBtn').onclick=load;
+retryBtn.onclick=reset;
+endBtn.onclick=()=>{if(phase!=='push'&&phase!=='done')finish();};
+$('followCb').onchange=e=>{follow=e.target.checked;load();};
+$('prevCb').onchange=e=>{prev=e.target.checked;render();};
+initTabs();load();
+</script>
+</body>
+</html>

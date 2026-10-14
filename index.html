@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#111722">
+<meta name="theme-color" content="#122a1e">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -22,18 +22,20 @@
 <style>
 
 :root{
-    --bg-1:#24354e;
-    --bg-2:#111722;
-    --bg-3:#0a0f16;
-    --panel:#1a2432;
-    --border:#425366;
-    --border-hover:#b51c1c;
-    --accent-red:#991b1b;
-    --gold:#d8b95a;
-    --gold-bright:#d7b14d;
-    --text:#EEE;
-    --text-dim:#c3ccd8;
-    --text-faint:#9ea8b5;
+    --bg-1:#204a34;
+    --bg-2:#122a1e;
+    --bg-3:#0b1d14;
+    --panel:#173424;
+    --panel-2:#1d3f2b;
+    --border:#3f6650;
+    --border-hover:#e7b23e;
+    --accent:#3ecf72;
+    --accent-dim:#1f5c3a;
+    --gold:#e7b23e;
+    --gold-bright:#f0c14f;
+    --text:#eef3ea;
+    --text-dim:#a9c2b3;
+    --text-faint:#8aa596;
     --sidebar-w:300px;
     --safe-top:env(safe-area-inset-top,0px);
     --safe-bottom:env(safe-area-inset-bottom,0px);
@@ -75,18 +77,54 @@ body{
     flex-shrink:0;
     display:flex;
     flex-direction:column;
-    background:linear-gradient(180deg,#151f2d 0%,#0d131c 100%);
+    background:linear-gradient(180deg,#153324 0%,#0c1f15 100%);
     border-right:2px solid var(--border);
     padding-top:var(--safe-top);
     padding-bottom:var(--safe-bottom);
     overflow-y:auto;
     transition:transform .3s ease;
     z-index:20;
+
+    position:fixed;
+    top:0;
+    bottom:0;
+    left:0;
+    transform:translateX(-100%);
+    box-shadow:0 0 40px rgba(0,0,0,.6);
+    visibility:hidden;
+    transition:transform .3s ease,visibility 0s linear .3s;
+}
+
+.sidebar.open{
+    transform:translateX(0);
+    visibility:visible;
+    transition:transform .3s ease,visibility 0s;
 }
 
 .sidebar-header{
+    position:relative;
     text-align:center;
     padding:28px 20px 20px;
+}
+
+.sidebar-close{
+    position:absolute;
+    top:10px;
+    right:12px;
+    width:34px;
+    height:34px;
+    background:var(--panel);
+    border:2px solid var(--border);
+    border-radius:10px;
+    color:var(--text-dim);
+    font-size:1rem;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.sidebar-close:hover{
+    border-color:var(--border-hover);
+    color:var(--gold);
 }
 
 .sidebar-header h1{
@@ -101,7 +139,7 @@ body{
     width:90px;
     height:3px;
     margin:16px auto 0;
-    background:var(--accent-red);
+    background:var(--accent);
     border-radius:3px;
 }
 
@@ -147,17 +185,17 @@ body{
 
 .tool-btn:hover{
     border-color:var(--border-hover);
-    box-shadow:0 0 14px rgba(181,28,28,.35);
+    box-shadow:0 0 14px rgba(231,178,62,.35);
 }
 
 .tool-btn.active{
-    border-color:var(--gold);
-    background:#233145;
-    box-shadow:0 0 16px rgba(216,185,90,.35);
+    border-color:var(--accent);
+    background:var(--accent-dim);
+    box-shadow:0 0 16px rgba(62,207,114,.35);
 }
 
 .tool-btn.active .tool-name{
-    color:var(--gold-bright);
+    color:#d9ffe6;
 }
 
 .tool-btn.coming-soon{
@@ -190,7 +228,7 @@ body{
     color:var(--text-faint);
     font-style:italic;
     font-size:.85rem;
-    border-top:1px solid #23303f;
+    border-top:1px solid var(--border);
 }
 
 .sidebar-footer span{
@@ -209,13 +247,17 @@ body{
 }
 
 .topbar{
-    display:none;
+    display:flex;
     align-items:center;
     gap:14px;
     padding:calc(12px + var(--safe-top)) 16px 12px;
-    background:#0d131c;
+    background:#0c1f15;
     border-bottom:2px solid var(--border);
     z-index:15;
+}
+
+.menu-toggle:hover{
+    border-color:var(--border-hover);
 }
 
 .menu-toggle{
@@ -301,28 +343,19 @@ body{
    MOBILE
    ========================= */
 
+.overlay.show{
+    display:block;
+}
+
+@media (min-width:821px){
+
+    /* On desktop the overlay just catches outside clicks to close the menu */
+    .overlay{
+        background:transparent;
+    }
+}
+
 @media (max-width:820px){
-
-    .topbar{
-        display:flex;
-    }
-
-    .sidebar{
-        position:fixed;
-        top:0;
-        bottom:0;
-        left:0;
-        transform:translateX(-100%);
-        box-shadow:0 0 40px rgba(0,0,0,.6);
-    }
-
-    .sidebar.open{
-        transform:translateX(0);
-    }
-
-    .overlay.show{
-        display:block;
-    }
 
     .sidebar-header h1{
         font-size:1.3rem;
@@ -344,6 +377,7 @@ body{
     <nav class="sidebar" id="sidebar" aria-label="Tool menu">
 
         <div class="sidebar-header">
+            <button class="sidebar-close" id="menuClose" aria-label="Close menu">✕</button>
             <h1>Coach's Resources</h1>
             <div class="divider"></div>
         </div>
@@ -354,6 +388,13 @@ body{
                 <button class="tool-btn" data-src="block-dice-trainer.html" data-name="Block Dice Trainer">
                     <span class="tool-icon">🏈</span>
                     <span class="tool-name">Block Dice Trainer</span>
+                </button>
+            </li>
+
+            <li>
+                <button class="tool-btn" data-src="line-of-scrimmage-trainer.html" data-name="LOS Trainer">
+                    <span class="tool-icon">🤼‍♀️</span>
+                    <span class="tool-name">Line of Scrimmage Trainer</span>
                 </button>
             </li>
 
@@ -467,6 +508,7 @@ body{
 const sidebar   = document.getElementById('sidebar');
 const overlay   = document.getElementById('overlay');
 const menuBtn   = document.getElementById('menuToggle');
+const closeBtn  = document.getElementById('menuClose');
 const frame     = document.getElementById('toolFrame');
 const welcome   = document.getElementById('welcome');
 const title     = document.getElementById('topbarTitle');
@@ -491,6 +533,11 @@ menuBtn.addEventListener('click', () => {
 });
 
 overlay.addEventListener('click', closeMenu);
+closeBtn.addEventListener('click', closeMenu);
+
+document.addEventListener('keydown', e => {
+    if(e.key === 'Escape') closeMenu();
+});
 
 function loadTool(src, name, pushHash){
     frame.src = src;
@@ -504,9 +551,8 @@ function loadTool(src, name, pushHash){
         history.replaceState(null, '', '#' + encodeURIComponent(src));
     }
 
-    if(isMobile()){
-        closeMenu();
-    }
+    // Auto-hide the menu once a tool is chosen (desktop and mobile)
+    closeMenu();
 }
 
 buttons.forEach(btn => {
@@ -521,6 +567,9 @@ const initialBtn = [...buttons].find(b => b.dataset.src === initialSrc);
 
 if(initialBtn){
     loadTool(initialBtn.dataset.src, initialBtn.dataset.name, false);
+} else if(!isMobile()){
+    // Nothing selected yet: start with the menu open on desktop
+    openMenu();
 }
 
 if("serviceWorker" in navigator){
