@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Blood Bowl Tournament Ruleset Creator</title>
+<style>
+:root{color-scheme:dark;--bg:#10241a;--card:#173326;--ink:#f1ecd8;--mut:#a9b8a8;--gold:#d4a72c;--line:#2f5340;--inp:#0d1d15;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+::-webkit-scrollbar{width:14px;height:14px;background:transparent}
+::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}
+::-webkit-scrollbar-thumb{background:#fff;border-radius:7px;border:3px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-button:single-button{display:block;width:14px;height:14px;background-color:transparent;background-repeat:no-repeat;background-position:center}
+::-webkit-scrollbar-button:vertical:decrement{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Cpath d='M2 8l4-5 4 5z' fill='white'/%3E%3C/svg%3E")}
+::-webkit-scrollbar-button:vertical:increment{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Cpath d='M2 4l4 5 4-5z' fill='white'/%3E%3C/svg%3E")}
+::-webkit-scrollbar-button:horizontal:decrement{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Cpath d='M8 2L3 6l5 4z' fill='white'/%3E%3C/svg%3E")}
+::-webkit-scrollbar-button:horizontal:increment{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Cpath d='M4 2l5 4-5 4z' fill='white'/%3E%3C/svg%3E")}
+@supports not selector(::-webkit-scrollbar){*{scrollbar-width:thin;scrollbar-color:#fff transparent}}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{background:#0a1a12;border-bottom:3px solid var(--gold);padding:14px 18px}
+h1{margin:0;font-size:22px;color:var(--gold)}
+header p{margin:2px 0 0;color:var(--mut);font-size:13px}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:#0a1a12;border-bottom:1px solid var(--line);padding:8px 18px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+main{max-width:1000px;margin:0 auto;padding:14px}
+section{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:14px}
+h2{margin:0 0 4px;font-size:17px;color:var(--gold)}
+.hint{color:var(--mut);font-size:13px;margin:0 0 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+label{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--mut)}
+input,select,textarea,button{font:inherit;color:var(--ink);background:var(--inp);border:1px solid var(--line);border-radius:5px;padding:6px 8px;max-width:100%}
+textarea{width:100%;resize:vertical}
+button{background:var(--gold);color:#1a1405;border-color:var(--gold);font-weight:600;cursor:pointer}
+button.s{background:transparent;color:var(--ink);border-color:var(--line)}
+.row{display:flex;gap:8px;align-items:center;margin:4px 0;flex-wrap:wrap}
+.row .x{flex:1;min-width:120px}
+.ck{flex-direction:row;align-items:center;gap:7px;color:var(--ink);font-size:14px;min-width:200px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+td,th{border:1px solid var(--line);padding:4px;vertical-align:top}
+td input,th input{width:100%;min-width:90px}
+td textarea{min-width:140px}
+table.mxf{table-layout:fixed}
+table.mxf td input,table.mxf th input,table.mxf td textarea{min-width:0}
+#doc table.mxp{table-layout:fixed;width:100%}
+#doc table.mxp td,#doc table.mxp th{overflow-wrap:anywhere;word-break:break-word}
+th input{font-weight:700;color:var(--gold)}
+#st{color:var(--mut);font-size:12px}
+#doc{display:none;background:#fff;color:#111;max-width:800px;margin:14px auto;padding:28px;font:13px/1.4 Georgia,serif}
+#doc h1{color:#7a0f0f;border-bottom:3px solid #7a0f0f;padding-bottom:4px;font-size:24px}
+#doc h1 .vn{font-size:.72em;font-weight:normal}
+#doc h2{color:#7a0f0f;font-size:15px;margin:16px 0 4px;border-bottom:1px solid #bbb}
+#doc td,#doc th{border:1px solid #999;padding:3px 6px;color:#111}
+#doc th{background:#eee;text-align:left}
+#doc .kv td:first-child{width:30%;font-weight:700;background:#f5f5f5}
+#doc p{white-space:pre-wrap;margin:4px 0}
+#doc ul{columns:2;column-gap:28px;margin:4px 0;padding-left:18px}
+#doc li{break-inside:avoid;margin-bottom:2px;white-space:pre-wrap}
+#doc ul.w{columns:1}
+#doc h3{font-size:13px;margin:6px 0 3px;color:#7a0f0f}
+#doc .flow{columns:3;column-gap:20px;font-size:12.5px}
+#doc .flow div{break-inside:avoid;margin-bottom:3px}
+#doc .days>div>div{font-size:12.5px;margin-bottom:3px;break-inside:avoid}
+#doc .days{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+#doc table.pg,#doc table.pg>tbody>tr>td,#doc table.pg>tfoot>tr>td{border:0;padding:0}
+.sp{height:0}
+#ft{margin-top:20px;border-top:1px solid #999;padding-top:4px;text-align:center;font-size:11px;color:#444}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+@page{margin:12mm 14mm}
+@media print{.sp{height:12mm}#ft{position:fixed;bottom:0;left:0;right:0;margin:0;background:#fff}table.pg{break-inside:auto!important}}
+body.prev>*:not(#doc):not(.bar){display:none}
+body.prev #doc{display:block}
+@media print{body{background:#fff}.bar,header,main{display:none!important}#doc{display:block!important;margin:0;padding:0;max-width:none}h2{break-after:avoid}table{break-inside:avoid}}
+</style></head><body>
+<header><h1>Blood Bowl Tournament Ruleset Creator</h1><p>Build your tournament pack, save it in this browser, then print it to PDF or copy it into your NAF listing.</p></header>
+<div class="bar">
+<button id="bPrev">Preview</button><button id="bPrint">Print / Save PDF</button><button class="s" id="bCopy">Copy as text</button>
+<input id="sn" placeholder="Name this ruleset"><button class="s" id="bSave">Save copy</button>
+<select id="sl"></select><button class="s" id="bLoad">Load</button><button class="s" id="bDel">Delete</button>
+<button class="s" id="bReset">Reset form</button><span id="st">Autosaves in this browser</span></div>
+<main id="app"></main>
+<div id="doc"></div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const IND=['Prayers to Nuffle','Part-time Assistant Coaches','Temp Agency Cheerleaders','Team Mascot','Weather Mage','Blitzers’ Best Kegs','Bribes','Extra Team Training','Mortuary Assistant','Plague Doctor','Riotous Rookies','Wandering Apothecaries','Halfling Master Chef','Biased Referee','Infamous Coaching Staff','Mercenary Players','Star Players','Wizard'];
+const DEV=['Custom kick-off table','Custom pitch / weather rules','Custom Prayers to Nuffle table','Turn timer / chess clock','Modified skill advancement','Custom Star Player rules','Custom scoring bonuses'];
+const AW=['Winner','Runner up','Most touchdowns','Most casualties','Stunty Cup','Best painted','Best sportsmanship','MVP','Wooden spoon'];
+const SCH=['Registration','Game 1','Lunch break','Game 2','Game 3','Awards and wrap up'];
+const mk=a=>a.map(t=>({t,on:false,x:''}));
+const D={f:{variant:'Blood Bowl 2025',type:'Open',style:'Resurrection',nafin:'No',nafmem:'Yes',nation:'England'},
+ mx:{tiers:['Tier 1','Tier 2','Tier 3','Tier 4'],tv:['1000k','1100k','1200k','1300k','1400k'],c:{}},
+ ind:mk(IND),dev:mk(DEV),aw:mk(AW),tx:{},nd:2,sch:[0,1,2].map(i=>({n:'Day '+(i+1),items:mk(SCH).map(o=>({...o,g:/^Game\b/.test(o.t)}))}))};
+const clone=o=>JSON.parse(JSON.stringify(o));
+let S=clone(D);
+try{const r=localStorage.getItem('bbrs');if(r)S=Object.assign(clone(D),JSON.parse(r))}catch(e){}
+const norm=()=>{if(!S.mx.tv||(S.mx.tiers.join()=='Tier 1,Tier 2,Tier 3'&&S.mx.tv.length==4&&!Object.values(S.mx.c).some(Boolean)))S.mx=clone(D.mx);
+S.sch.forEach(d=>d.items.forEach(o=>{if(o.g==null)o.g=/^Game\b/.test(o.t)}));
+if(!S.aw.some(o=>o.t=='MVP'))S.aw.splice(7,0,{t:'MVP',on:false,x:''});
+if(!S.ind.some(o=>o.t=='Prayers to Nuffle')){const old=S.ind,nw=mk(IND);nw.forEach(n=>{const f=old.find(o=>o.t==n.t);if(f){n.on=f.on;n.x=f.x}});old.slice(16).forEach(o=>nw.push(o));S.ind=nw}};norm();
+const g=p=>p.split('.').reduce((o,k)=>o==null?o:o[k],S);
+function set(p,v){const k=p.split('.'),l=k.pop();let o=S;k.forEach(x=>{if(o[x]==null)o[x]={};o=o[x]});o[l]=v}
+const save=()=>{try{localStorage.setItem('bbrs',JSON.stringify(S));$('#st').textContent='Saved '+new Date().toLocaleTimeString()}catch(e){$('#st').textContent='Could not save in this browser'}};
+const slots=()=>{try{return JSON.parse(localStorage.getItem('bbrs_slots')||'{}')}catch(e){return{}}};
+function slotSel(){$('#sl').innerHTML='<option value="">Saved rulesets…</option>'+Object.keys(slots()).map(n=>`<option>${esc(n)}</option>`).join('')}
+
+const F=[['name','Tournament name'],['org','Venue'],['cname','Contact name'],['email','Contact email','email'],['web','Webpage / where to find info'],['track','Tournament tracking software','sel',['','Tourplay','NAF','Spreadsheet','Other']],['fb','Facebook link','url'],['nafurl','NAF tournament link','url'],['tp','Tourplay link','url'],['addr','Address'],['city','City'],['state','County / State'],['zip','Postcode / Zip'],['nation','Nation'],['start','Start date','date'],['end','End date','date'],['games','Number of games','number'],['cost','Cost (with currency)'],['nafin','NAF fee included?','sel',['No','Yes']],['nafmem','NAF membership required?','sel',['Yes','No']],['type','Type','sel',['Open','Invitational','Squad','Major / National']],['style','Style','sel',['Resurrection','Swiss','Knockout','League','Other']],['variant','Variant','sel',['Blood Bowl 2025','Blood Bowl 2020','Other']]];
+function field(p,l,t,o){const v=g(p)||'';return `<label>${l}${t=='sel'?`<select data-p="${p}">${o.map(x=>`<option${x==v?' selected':''}>${x}</option>`).join('')}</select>`:`<input type="${t||'text'}" data-p="${p}" value="${esc(v)}">`}</label>`}
+function ta(p,l,h,r){return `<section><h2>${l}</h2><p class="hint">${h}</p><textarea rows="${r||6}" data-p="tx.${p}">${esc(S.tx[p]||'')}</textarea></section>`}
+function cl(k,ph){return `<div>${S[k].map((o,i)=>`<div class="row"><label class="ck"><input type="checkbox" data-p="${k}.${i}.on"${o.on?' checked':''}> ${esc(o.t)}</label>${k=='dev'?`<textarea class="x" rows="4" style="flex:1 1 100%" placeholder="${ph}" data-p="${k}.${i}.x">${esc(o.x)}</textarea>`:`<input class="x" placeholder="${ph}" data-p="${k}.${i}.x" value="${esc(o.x)}">`}${i>=D[k].length?`<button class="s" data-a="del" data-k="${k}" data-i="${i}">✕</button>`:''}</div>`).join('')}<div class="row"><input class="x" id="n_${k}" placeholder="Add your own…"><button data-a="add" data-k="${k}">Add</button></div></div>`}
+function mxh(){const m=S.mx;return `<div class="row"><label>Number of tiers (down the side)<input type="number" min="1" max="12" value="${m.tiers.length}" data-a="tiers"></label><label>Team-value bands (across the top)<input type="number" min="1" max="12" value="${m.tv.length}" data-a="tv"></label></div><div class="scroll"><table class="mxf" style="min-width:${(m.tv.length+1)*130}px"><tr><th>Tier / Team value</th>${m.tv.map((c,j)=>`<th><input data-p="mx.tv.${j}" value="${esc(c)}"></th>`).join('')}</tr>${m.tiers.map((r,i)=>`<tr><td><input data-p="mx.tiers.${i}" value="${esc(r)}"></td>${m.tv.map((c,j)=>`<td><textarea rows="3" data-p="mx.c.${i}_${j}" placeholder="one team per line">${esc(m.c[i+'_'+j]||'')}</textarea></td>`).join('')}</tr>`).join('')}</table></div>`}
+const gn=(i,j)=>{let n=0;S.sch.slice(0,i+1).forEach((d,a)=>d.items.forEach((o,b)=>{if(o.g&&o.on&&(a<i||b<j))n++}));return n+1};
+const lab=(i,j,o)=>o.g?'Game '+gn(i,j):o.t;
+function sch(){return `<div class="row"><label>Number of days<input type="number" min="1" max="3" value="${S.nd}" data-a="nd"></label></div><div class="dgrid">`+S.sch.slice(0,S.nd).map((d,i)=>`<div><label>Day name<input data-p="sch.${i}.n" value="${esc(d.n)}"></label>${d.items.map((o,j)=>`<div class="row"><label class="ck"><input type="checkbox" data-p="sch.${i}.items.${j}.on"${o.on?' checked':''}> ${esc(lab(i,j,o))}</label><input class="x" placeholder="Time / notes" data-p="sch.${i}.items.${j}.x" value="${esc(o.x)}">${j>=SCH.length?`<button class="s" data-a="sdel" data-i="${i}" data-j="${j}">✕</button>`:''}</div>`).join('')}<div class="row"><input class="x" id="n_s${i}" placeholder="Add your own…"><button data-a="sadd" data-i="${i}">Add</button></div></div>`).join('')+'</div>'}
+function render(){
+$('#app').innerHTML=`
+<section><h2>Tournament details</h2><p class="hint">Mirrors the NAF tournament listing fields. Number of days is worked out from your dates.</p><div class="grid">${F.map(f=>field('f.'+f[0],f[1],f[2],f[3])).join('')}${S.f.type=='Squad'?field('f.squad','Squad size (coaches per squad)','number'):''}</div></section>
+<section><h2>Schedule</h2><p class="hint">Choose how many days, then tick the items that happen on each day and add start times or notes.</p>${sch()}</section>
+<section><h2>Scoring</h2><p class="hint">Tournament points per result, plus any bonuses.</p><div class="grid">${[['w','Points for a win'],['d','Points for a draw'],['l','Points for a loss'],['td','Bonus per touchdown'],['cas','Bonus per casualty'],['con','Points for a coach who concedes'],['conw','Points for the opponent of a concession']].map(f=>field('sc.'+f[0],f[1],'number')).join('')}</div><p class="hint" style="margin-top:10px">Concession rules, tiebreakers and anything else about scoring:</p><textarea rows="3" data-p="tx.scoring">${esc(S.tx.scoring||'')}</textarea></section>
+<section><h2>Tournament awards</h2><p class="hint">Tick the awards you’ll give out; use the box to note the prize or rule.</p>${cl('aw','Prize / how it’s decided')}</section>
+<section><h2>Roster building matrix</h2><p class="hint">Team value runs across the top and tiers down the side. Name each one, then list the teams allowed in each tier at each team value.</p>${mxh()}</section>
+${ta('build','Team building','Starting treasury, roster limits, how teams are built, how re-rolls and staff are bought, submission deadline for lists.',6)}
+${ta('skills','Skill distribution','Primary/secondary rules, doubles, stat increases, how many skills per player, caps on skills, Elite/Loner restrictions.',6)}
+<section><h2>Inducements allowed</h2><p class="hint">Tick what’s allowed and add a limit or note. Only ticked items appear in the printed copy.</p>${cl('ind','Max / notes')}</section>
+${ta('stars','Star Players not allowed','One per line.',4)}
+<section><h2>Deviations from standard rules</h2><p class="hint">Tick any that apply and describe them; add your own for anything else.</p>${cl('dev','Details')}</section>
+${ta('rules','Rules','Core rules, house rules, time limits, conduct, how pairings are made.',8)}
+${ta('bring','What players need to bring','Teams, dice, templates, tokens, rulebook, printed lists…',4)}
+${ta('provided','What will be provided','Pitches, dugouts, refreshments, prizes…',4)}
+${ta('info','Extra information','Venue notes, parking, contact details.',4)}`;document.querySelectorAll('#app h2').forEach(h=>h.textContent=h.textContent.replace(/\b[a-z]/g,c=>c.toUpperCase()))}
+
+function doc(){const f=S.f,o=[];let days='';
+if(f.start&&f.end){const n=Math.round((new Date(f.end)-new Date(f.start))/864e5)+1;if(n>0)days=n}
+const sc=S.sc||{};
+const on=(k,a)=>S[k].filter(x=>x.on===a).map(x=>x.x?x.t+' – '+x.x:x.t);
+const lk=[['Facebook',f.fb],['NAF',f.nafurl],['Tourplay',f.tp]].filter(x=>x[1]);
+const lkv=lk.length?{html:lk.map(x=>`<a href="${esc(x[1])}">${x[0]}</a>`).join(' / '),toString:()=>lk.map(x=>x[0]+': '+x[1]).join('; ')}:'';
+o.push({h:'Tournament details',rows:[['Venue',f.org],['Contact',[f.cname,f.email].filter(Boolean).join(' – ')],['Info / webpage',f.web],['Tournament tracking software',f.track],['Links',lkv],['Address',[f.addr,f.city,f.state,f.zip,f.nation].filter(Boolean).join(', ')],['Dates',[f.start,f.end].filter(Boolean).join(' to ')],['Number of days',days],['Number of games',f.games],['Cost',f.cost],['NAF fee included',f.nafin],['NAF membership required',f.nafmem||'Yes'],['Type',f.type],['Squad size',f.type=='Squad'?f.squad:''],['Style',f.style],['Variant',f.variant]],flow:1});
+const sd=S.sch.slice(0,S.nd).map((d,i)=>({n:d.n,rows:d.items.map((o2,j)=>o2.on?[o2.x||'',lab(i,j,o2)]:null).filter(Boolean)})).filter(d=>d.rows.length);if(sd.length)o.push({h:'Schedule',days:sd});
+o.push({h:'Scoring',rows:[['Win',sc.w],['Draw',sc.d],['Loss',sc.l],['Per touchdown',sc.td],['Per casualty',sc.cas],['Coach who concedes',sc.con],['Opponent of a concession',sc.conw]],flow:1,tx:S.tx.scoring});
+o.push({h:'Tournament awards',list:on('aw',true)});
+o.push({h:'Roster building matrix',mx:1});
+o.push({h:'Team building',tx:S.tx.build});
+o.push({h:'Skill distribution',tx:S.tx.skills});
+o.push({h:'Inducements allowed',list:on('ind',true)});
+o.push({h:'Star Players not allowed',list:(S.tx.stars||'').split('\n').map(x=>x.trim()).filter(Boolean)});
+o.push({h:'Deviations from standard rules',list:on('dev',true),wide:1});
+o.push({h:'Rules',tx:S.tx.rules});
+o.push({h:'What players need to bring',tx:S.tx.bring});
+o.push({h:'What will be provided',tx:S.tx.provided});
+o.push({h:'Additional information',tx:S.tx.info});
+return o}
+function mxData(){const m=S.mx;return [['Tier / Team value',...m.tv],...m.tiers.map((r,i)=>[r,...m.tv.map((c,j)=>m.c[i+'_'+j]||'')])]}
+const ft=()=>{const f=S.f,d=[f.start,f.end].filter(Boolean).join(' – ');return `<div id="ft">${esc(f.name||'Untitled tournament')}${d?' | '+esc(d):''}</div>`};
+function html(){const t=esc(S.f.name||'Untitled tournament'),vp=[S.f.org,S.f.city,S.f.state].filter(Boolean).join(', '),vn=vp?`<span class="vn"> – ${esc(vp)}</span>`:'';return `<table class="pg"><tbody><tr><td><h1>${t}${vn}</h1>`+doc().map(s=>{let b='';
+if(s.rows){const r=s.rows.filter(x=>x[1]!==''&&x[1]!=null);if(r.length)b+=s.flow?`<div class="flow">${r.map(x=>`<div><b>${x[0]}:</b> ${x[1].html||esc(x[1])}</div>`).join('')}</div>`:`<table class="kv">${r.map(x=>`<tr><td>${x[0]}</td><td>${x[1].html||esc(x[1])}</td></tr>`).join('')}</table>`}
+if(s.list&&s.list.length)b+=`<ul${s.wide?' class="w"':''}>${s.list.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`;
+if(s.tx)b+=`<p>${esc(s.tx)}</p>`;
+if(s.days)b+=`<div class="days">${s.days.map(d=>`<div><h3>${esc(d.n)}</h3>${d.rows.map(x=>`<div><b>${esc(x[1])}${x[0]?':':''}</b>${x[0]?' '+esc(x[0]):''}</div>`).join('')}</div>`).join('')}</div>`;
+if(s.mx)b+=`<table class="mxp">${mxData().map((r,i)=>`<tr>${r.map(c=>i?`<td>${String(c).split(/[\n,]+/).map(x=>esc(x.trim())).filter(Boolean).join('<br>')}</td>`:`<th>${esc(c)}</th>`).join('')}</tr>`).join('')}</table>`;
+return b?`<h2>${s.h.replace(/\b[a-z]/g,c=>c.toUpperCase())}</h2>${b}`:''}).join('')+`</td></tr></tbody><tfoot><tr><td><div class="sp"></div></td></tr></tfoot></table>`+ft()}
+function text(){return (S.f.name||'Untitled tournament').toUpperCase()+'\n\n'+doc().map(s=>{let b=[];
+if(s.rows)s.rows.forEach(x=>{if(x[1]!==''&&x[1]!=null)b.push(x[0]+': '+x[1])});
+if(s.list)s.list.forEach(x=>b.push('- '+x));
+if(s.tx)b.push(s.tx);
+if(s.days)s.days.forEach(d=>{b.push(d.n+':');d.rows.forEach(x=>b.push('  '+x[1]+(x[0]?' – '+x[0]:'')))});
+if(s.mx)mxData().forEach(r=>b.push(r.map(c=>String(c).split(/[\n,]+/).map(x=>x.trim()).filter(Boolean).join(', ')).join(' | ')));
+return b.length?s.h.toUpperCase()+'\n'+b.join('\n'):''}).filter(Boolean).join('\n\n')}
+
+document.addEventListener('input',e=>{const t=e.target,p=t.dataset.p;if(!p)return;set(p,t.type=='checkbox'?t.checked:t.value);save();if(p=='f.type'||/^sch\.\d+\.items\.\d+\.on$/.test(p))render()});
+document.addEventListener('change',e=>{const t=e.target,a=t.dataset.a;if(a=='nd'){S.nd=Math.max(1,Math.min(+t.value||1,3));save();render();return}if(a!='tiers'&&a!='tv')return;const m=S.mx,n=Math.max(1,Math.min(+t.value||1,12)),arr=m[a];
+while(arr.length>n)arr.pop();while(arr.length<n)arr.push(a=='tiers'?'Tier '+(arr.length+1):'');save();render()});
+document.addEventListener('click',e=>{const t=e.target,a=t.dataset.a;if(!a)return;
+if(a=='add'){const i=$('#n_'+t.dataset.k),v=i.value.trim();if(v){S[t.dataset.k].push({t:v,on:true,x:''});save();render()}}
+if(a=='del'){S[t.dataset.k].splice(+t.dataset.i,1);save();render()}
+if(a=='sadd'){const i=$('#n_s'+t.dataset.i),v=i.value.trim();if(v){S.sch[+t.dataset.i].items.push({t:v,on:true,x:''});save();render()}}
+if(a=='sdel'){S.sch[+t.dataset.i].items.splice(+t.dataset.j,1);save();render()}});
+const ready=()=>{$('#doc').innerHTML=html()};
+$('#bPrev').onclick=()=>{ready();const p=document.body.classList.toggle('prev');$('#bPrev').textContent=p?'Back to editing':'Preview'};
+$('#bPrint').onclick=()=>{ready();try{window.print()}catch(e){$('#st').textContent='Printing is blocked here; use Preview and your browser’s print option'}};
+$('#bCopy').onclick=async()=>{try{await navigator.clipboard.writeText(text());$('#st').textContent='Copied to clipboard'}catch(e){const w=document.createElement('textarea');w.value=text();w.rows=12;w.style.cssText='position:fixed;inset:20% 10%;z-index:9;width:80%';w.onblur=()=>w.remove();document.body.append(w);w.select()}};
+$('#bSave').onclick=()=>{const n=$('#sn').value.trim()||S.f.name;if(!n){$('#st').textContent='Give it a name first';return}const s=slots();s[n]=clone(S);try{localStorage.setItem('bbrs_slots',JSON.stringify(s));slotSel();$('#sl').value=n;$('#st').textContent='Saved copy “'+n+'”'}catch(e){$('#st').textContent='Could not save'}};
+$('#bLoad').onclick=()=>{const s=slots()[$('#sl').value];if(s){S=Object.assign(clone(D),clone(s));norm();save();render()}};
+$('#bDel').onclick=()=>{const s=slots(),n=$('#sl').value;if(n){delete s[n];try{localStorage.setItem('bbrs_slots',JSON.stringify(s))}catch(e){}slotSel()}};
+$('#bReset').onclick=()=>{if($('#bReset').dataset.s){S=clone(D);save();render();$('#bReset').textContent='Reset form';delete $('#bReset').dataset.s}else{$('#bReset').dataset.s=1;$('#bReset').textContent='Click again to clear';setTimeout(()=>{$('#bReset').textContent='Reset form';delete $('#bReset').dataset.s},3000)}};
+slotSel();render();
+</script></body></html>
