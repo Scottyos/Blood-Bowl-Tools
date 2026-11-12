@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blood Bowl Links &amp; Resources</title>
+<style>
+:root{--bg:#0d2616;--panel:#14361f;--panel2:#1a4527;--gold:#d4af37;--gold2:#f0d060;--text:#e8efe9;--muted:#9bb5a2;--line:#2a5a3a}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at top,#14401f,var(--bg) 60%);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
+header{text-align:center;padding:32px 16px 12px}
+h1{margin:0;color:var(--gold);font-size:clamp(1.6rem,4vw,2.4rem);letter-spacing:.5px}
+header p{color:var(--muted);margin:8px 0 16px}
+#q{width:min(420px,100%);padding:10px 14px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--text);font-size:1rem}
+#q:focus{outline:2px solid var(--gold);border-color:var(--gold)}
+main{max-width:1000px;margin:0 auto;padding:8px 16px 40px}
+section{margin-top:24px}
+h2{color:var(--gold);font-size:1.15rem;margin:0 0 10px;padding-bottom:6px;border-bottom:2px solid var(--gold);text-transform:uppercase;letter-spacing:1px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+a.card{display:block;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:8px;padding:12px 14px;color:var(--text);text-decoration:none;transition:transform .12s,background .12s}
+a.card:hover,a.card:focus-visible{background:var(--panel2);transform:translateY(-2px);outline:none;border-color:var(--gold2)}
+.name{font-weight:600;color:var(--gold2)}
+.desc{font-size:.88rem;color:var(--text);margin-top:2px}
+.url{font-size:.78rem;color:var(--muted);margin-top:4px;word-break:break-all}
+.none{display:none;text-align:center;color:var(--muted);margin-top:30px}
+footer{text-align:center;color:var(--muted);font-size:.8rem;padding:0 16px 24px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏈 Blood Bowl Links &amp; Resources</h1>
+  <p>Handy sites for playing, building and organising Blood Bowl</p>
+  <input id="q" type="search" placeholder="Filter links…" aria-label="Filter links">
+</header>
+<main id="main"></main>
+<p class="none" id="none">No links match your filter.</p>
+<footer>Links open in a new tab.</footer>
+
+<script>
+const DATA = [
+  ["Essentials", [
+    ["TourPlay", "https://tourplay.net/", "Tournament and event listings and results"],
+    ["NAF", "https://www.thenaf.net/", "Nuffle Amorical Football Association: rankings and tournaments"],
+    ["Blood Bowl Base", "https://bloodbowlbase.ru/", "Rules and roster reference"],
+    ["FUMBBL", "https://fumbbl.com/", "Play Blood Bowl online"],
+    ["Super FUMBBL", "https://www.superfumbbl.com", "FUMBBL but now it's SUPER!"],
+    ["FUMBBL Race Strategy", "https://fumbbl.com/help:BB20RaceStrategy", "Team strategy guides on the FUMBBL help pages"],
+    ["BBTM", "https://bbtm.app", "Blood Bowl Tournament Manager App"]
+    
+  ]],
+  ["Blogs", [
+    ["Claw Blood Bowl", "https://clawbloodbowl.uk/", "Blood Bowl blog"]
+  ]],
+  ["Toolkits", [
+    ["Nuffle Toolkit", "https://nuffle-toolkit.netlify.app/", "Useful catch all toolkit "],
+    ["Nufflepedia", "https://nufflepedia.netlify.app/", "BB Coaches Resources"],
+    ["Garcangel Analytics", "https://garcangel.com/analytics/", "In Depth Analytics"],
+    ["BBFM", "https://bbfm.app/", "Blood Bowl Formation Maker"],
+    ["Nuffledle", "https://nuffledle.netlify.app/", "Nuffledle, it's wordle but Blood bowl"],
+    ["BB School of Block", "https://bbsob.net/", "Learning hub with a rookie academy, library and toolshed"]
+  ]],
+  ["Calculators", [
+    ["Blood Bowl Dave", "https://www.bloodbowldave.com/", "Dice and probability calculators"]
+  ]],
+  ["Rosters", [
+    ["BBTC", "https://bbtc.pl/", "Roster Creation"],
+    ["BB Roster", "https://bbroster.com/", "Roster Creation"],
+    ["Nuflheim", "https://jonasbusk.github.io/nuflheim/", "Roster Creation"],
+    ["Blood Bowl Roster Builder", "https://bloodbowlrosterbuilder.co.uk/", "Roster Creation"],
+    ["Find Your Team (BB School of Block)", "https://bbsob.net/locker-room/find-your-team/", "Pick a team by playstyle and rules complexity"]
+  ]],
+  ["3rd Party Resources", [
+    ["MyMiniFactory", "https://www.myminifactory.com/", "3D printable models and miniatures"],
+    ["BaseForge", "https://ms3dstudio.de/tools/baseforge/", "Base design tool by MS3D Studio"]
+  ]]
+];
+
+const main = document.getElementById("main");
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+main.innerHTML = DATA.map(([cat, links]) =>
+  `<section><h2>${esc(cat)}</h2><div class="grid">` +
+  links.map(([n,u,d]) => {
+    const host = u.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
+    return `<a class="card" href="${u}" target="_blank" rel="noopener noreferrer" data-s="${esc((n+" "+d+" "+host+" "+cat).toLowerCase())}">
+      <div class="name">${esc(n)}</div>${d ? `<div class="desc">${esc(d)}</div>` : ""}<div class="url">${esc(host)}</div></a>`;
+  }).join("") + `</div></section>`).join("");
+
+document.getElementById("q").addEventListener("input", e => {
+  const t = e.target.value.trim().toLowerCase();
+  let total = 0;
+  main.querySelectorAll("section").forEach(sec => {
+    let shown = 0;
+    sec.querySelectorAll("a.card").forEach(a => {
+      const ok = !t || a.dataset.s.includes(t);
+      a.style.display = ok ? "" : "none";
+      if (ok) shown++;
+    });
+    sec.style.display = shown ? "" : "none";
+    total += shown;
+  });
+  document.getElementById("none").style.display = total ? "none" : "block";
+});
+</script>
+</body>
+</html>
